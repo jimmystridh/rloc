@@ -20,7 +20,7 @@ impl FileStats {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum State {
+pub enum State {
     Code,
     BlockComment { depth: u32 },
     String { delimiter: char },
@@ -99,7 +99,7 @@ pub fn count_lines(path: &Path, language: &Language) -> std::io::Result<FileStat
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum LineType {
+pub enum LineType {
     Code,
     Comment,
     Mixed,
@@ -107,7 +107,7 @@ enum LineType {
 }
 
 #[allow(unused_assignments)]
-fn classify_line(line: &str, initial_state: State, lang: &Language) -> (State, LineType) {
+pub fn classify_line(line: &str, initial_state: State, lang: &Language) -> (State, LineType) {
     let mut state = initial_state;
     let mut has_code = false;
     let mut has_comment = matches!(state, State::BlockComment { .. });

@@ -160,6 +160,12 @@ pub struct Cli {
     #[arg(long, help = "Print all known file extensions and exit")]
     pub show_ext: bool,
 
+    #[arg(long, value_name = "EXT", help = "Write files with comments removed (output to <file>.<EXT>)")]
+    pub strip_comments: Option<String>,
+
+    #[arg(long, value_name = "EXT", help = "Write files with code removed, keeping only comments (output to <file>.<EXT>)")]
+    pub strip_code: Option<String>,
+
     #[arg(long, value_name = "FILE", help = "Read and sum JSON reports from files")]
     pub sum_reports: Vec<PathBuf>,
 

@@ -3,6 +3,7 @@ mod counter;
 mod languages;
 mod output;
 mod stats;
+mod strip;
 mod walker;
 
 use clap::Parser;
@@ -44,6 +45,10 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
 
     if !cli.sum_reports.is_empty() {
         return sum_reports(&cli);
+    }
+
+    if cli.strip_comments.is_some() || cli.strip_code.is_some() {
+        return run_strip(&cli);
     }
 
     if cli.threads > 0 {
@@ -298,6 +303,50 @@ fn sum_reports(cli: &Cli) -> Result<(), Box<dyn std::error::Error>> {
     let combined = JsonOutput::sum_reports(reports);
     let json = serde_json::to_string_pretty(&combined)?;
     println!("{}", json);
+
+    Ok(())
+}
+
+fn run_strip(cli: &Cli) -> Result<(), Box<dyn std::error::Error>> {
+    use strip::{strip_file, StripMode};
+
+    let walker_config = cli.to_walker_config()?;
+    let files = walk_files(&walker_config);
+
+    let (mode, ext) = if let Some(ref ext) = cli.strip_comments {
+        (StripMode::Comments, ext.as_str())
+    } else if let Some(ref ext) = cli.strip_code {
+        (StripMode::Code, ext.as_str())
+    } else {
+        return Err("No strip mode specified".into());
+    };
+
+    let mut processed = 0;
+    let mut errors = 0;
+
+    for entry in files {
+        match strip_file(&entry.path, entry.language, match mode {
+            StripMode::Comments => StripMode::Comments,
+            StripMode::Code => StripMode::Code,
+        }, ext) {
+            Ok(()) => {
+                processed += 1;
+                if cli.verbose > 0 {
+                    eprintln!("Stripped: {}", entry.path.display());
+                }
+            }
+            Err(e) => {
+                errors += 1;
+                if cli.verbose > 0 {
+                    eprintln!("Error stripping {}: {}", entry.path.display(), e);
+                }
+            }
+        }
+    }
+
+    if !cli.quiet {
+        eprintln!("Processed {} files ({} errors)", processed, errors);
+    }
 
     Ok(())
 }
