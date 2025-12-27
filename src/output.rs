@@ -1,6 +1,34 @@
-use crate::stats::{JsonOutput, Summary};
+use crate::stats::{JsonOutput, LanguageStats, Summary};
 use comfy_table::{presets::UTF8_FULL_CONDENSED, Attribute, Cell, Color, ContentArrangement, Table};
 use std::io::{self, Write};
+
+fn apply_summary_cutoff(languages: &[LanguageStats], cutoff: usize) -> Vec<LanguageStats> {
+    let mut kept: Vec<LanguageStats> = Vec::new();
+    let mut other = LanguageStats {
+        name: "Other".to_string(),
+        files: 0,
+        code: 0,
+        comments: 0,
+        blanks: 0,
+    };
+
+    for lang in languages {
+        if lang.files as usize >= cutoff {
+            kept.push(lang.clone());
+        } else {
+            other.files += lang.files;
+            other.code += lang.code;
+            other.comments += lang.comments;
+            other.blanks += lang.blanks;
+        }
+    }
+
+    if other.files > 0 {
+        kept.push(other);
+    }
+
+    kept
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum OutputFormat {
@@ -24,6 +52,7 @@ pub struct OutputConfig {
     pub show_total_column: bool,
     pub csv_delimiter: u8,
     pub by_percent: bool,
+    pub summary_cutoff: Option<usize>,
 }
 
 impl Default for OutputConfig {
@@ -37,6 +66,7 @@ impl Default for OutputConfig {
             show_total_column: false,
             csv_delimiter: b',',
             by_percent: false,
+            summary_cutoff: None,
         }
     }
 }
@@ -108,7 +138,11 @@ fn render_language_table(summary: &Summary, config: &OutputConfig, out: &mut imp
 
     table.set_header(headers);
 
-    let mut languages = summary.languages.clone();
+    let mut languages = if let Some(cutoff) = config.summary_cutoff {
+        apply_summary_cutoff(&summary.languages, cutoff)
+    } else {
+        summary.languages.clone()
+    };
     match config.sort_by {
         SortBy::Language => languages.sort_by(|a, b| a.name.cmp(&b.name)),
         SortBy::Files => languages.sort_by(|a, b| b.files.cmp(&a.files)),
@@ -240,8 +274,13 @@ fn render_csv(summary: &Summary, config: &OutputConfig, out: &mut impl Write) ->
             ])?;
         }
     } else {
+        let languages = if let Some(cutoff) = config.summary_cutoff {
+            apply_summary_cutoff(&summary.languages, cutoff)
+        } else {
+            summary.languages.clone()
+        };
         writer.write_record(["Language", "Files", "Blank", "Comment", "Code"])?;
-        for lang in &summary.languages {
+        for lang in &languages {
             writer.write_record([
                 &lang.name,
                 &lang.files.to_string(),
@@ -290,6 +329,11 @@ fn render_markdown(summary: &Summary, config: &OutputConfig, out: &mut impl Writ
             )?;
         }
     } else {
+        let languages = if let Some(cutoff) = config.summary_cutoff {
+            apply_summary_cutoff(&summary.languages, cutoff)
+        } else {
+            summary.languages.clone()
+        };
         let mut headers = vec!["Language", "Files", "Blank", "Comment", "Code"];
         let mut alignments = vec![":---", "---:", "---:", "---:", "---:"];
 
@@ -301,7 +345,7 @@ fn render_markdown(summary: &Summary, config: &OutputConfig, out: &mut impl Writ
         writeln!(out, "| {} |", headers.join(" | "))?;
         writeln!(out, "| {} |", alignments.join(" | "))?;
 
-        for lang in &summary.languages {
+        for lang in &languages {
             let mut row = format!(
                 "| {} | {} | {} | {} | {}",
                 lang.name, lang.files, lang.blanks, lang.comments, lang.code
@@ -349,6 +393,11 @@ fn render_sql(summary: &Summary, config: &OutputConfig, out: &mut impl Write) ->
             )?;
         }
     } else {
+        let languages = if let Some(cutoff) = config.summary_cutoff {
+            apply_summary_cutoff(&summary.languages, cutoff)
+        } else {
+            summary.languages.clone()
+        };
         writeln!(out, "CREATE TABLE t (")?;
         writeln!(out, "    Language TEXT,")?;
         writeln!(out, "    nFiles INTEGER,")?;
@@ -358,7 +407,7 @@ fn render_sql(summary: &Summary, config: &OutputConfig, out: &mut impl Write) ->
         writeln!(out, ");")?;
         writeln!(out)?;
 
-        for lang in &summary.languages {
+        for lang in &languages {
             writeln!(
                 out,
                 "INSERT INTO t VALUES ('{}', {}, {}, {}, {});",
@@ -408,8 +457,13 @@ fn render_xml(summary: &Summary, config: &OutputConfig, out: &mut impl Write) ->
         }
         writeln!(out, "  </files>")?;
     } else {
+        let languages = if let Some(cutoff) = config.summary_cutoff {
+            apply_summary_cutoff(&summary.languages, cutoff)
+        } else {
+            summary.languages.clone()
+        };
         writeln!(out, "  <languages>")?;
-        for lang in &summary.languages {
+        for lang in &languages {
             writeln!(out, "    <language name=\"{}\">", escape_xml(&lang.name))?;
             writeln!(out, "      <files>{}</files>", lang.files)?;
             writeln!(out, "      <blank>{}</blank>", lang.blanks)?;

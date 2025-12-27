@@ -1,7 +1,8 @@
-use crate::languages::{detect_language, Language};
+use crate::languages::{detect_language, Language, LANGUAGES};
 use ignore::overrides::OverrideBuilder;
 use ignore::WalkBuilder;
 use regex::Regex;
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -14,6 +15,7 @@ pub struct WalkerConfig {
     pub exclude_langs: Vec<String>,
     pub include_exts: Vec<String>,
     pub include_langs: Vec<String>,
+    pub force_lang: HashMap<String, String>,
     pub match_dir: Option<Regex>,
     pub not_match_dir: Vec<Regex>,
     pub match_file: Option<Regex>,
@@ -64,6 +66,7 @@ impl Default for WalkerConfig {
             exclude_langs: vec![],
             include_exts: vec![],
             include_langs: vec![],
+            force_lang: HashMap::new(),
             match_dir: None,
             not_match_dir: vec![],
             match_file: None,
@@ -286,7 +289,15 @@ fn filter_files(files: Vec<PathBuf>, config: &WalkerConfig) -> Vec<FileEntry> {
             true
         })
         .filter_map(|path| {
-            let language = detect_language(&path)?;
+            let language = if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                if let Some(forced_lang) = config.force_lang.get(&ext.to_lowercase()) {
+                    LANGUAGES.get(forced_lang.as_str())
+                } else {
+                    detect_language(&path)
+                }
+            } else {
+                detect_language(&path)
+            }?;
 
             if !include_langs_lower.is_empty()
                 && !include_langs_lower.iter().any(|l| l.eq_ignore_ascii_case(language.name)) {

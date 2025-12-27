@@ -1,6 +1,6 @@
 use crate::counter::FileStats;
 use ahash::AHashMap;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::Duration;
 
@@ -109,9 +109,9 @@ impl Summary {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JsonOutput {
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none", default)]
     pub header: Option<JsonHeader>,
     #[serde(flatten)]
     pub languages: HashMap<String, JsonLanguageStats>,
@@ -119,7 +119,7 @@ pub struct JsonOutput {
     pub sum: JsonLanguageStats,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JsonHeader {
     pub cloc_version: String,
     pub elapsed_seconds: f64,
@@ -129,7 +129,7 @@ pub struct JsonHeader {
     pub lines_per_second: f64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct JsonLanguageStats {
     #[serde(rename = "nFiles")]
     pub n_files: u64,
@@ -176,6 +176,33 @@ impl From<&Summary> for JsonOutput {
             header,
             languages,
             sum,
+        }
+    }
+}
+
+impl JsonOutput {
+    pub fn sum_reports(reports: Vec<JsonOutput>) -> Self {
+        let mut combined_langs: HashMap<String, JsonLanguageStats> = HashMap::new();
+        let mut total_sum = JsonLanguageStats::default();
+
+        for report in reports {
+            for (name, stats) in report.languages {
+                let entry = combined_langs.entry(name).or_default();
+                entry.n_files += stats.n_files;
+                entry.blank += stats.blank;
+                entry.comment += stats.comment;
+                entry.code += stats.code;
+            }
+            total_sum.n_files += report.sum.n_files;
+            total_sum.blank += report.sum.blank;
+            total_sum.comment += report.sum.comment;
+            total_sum.code += report.sum.code;
+        }
+
+        JsonOutput {
+            header: None,
+            languages: combined_langs,
+            sum: total_sum,
         }
     }
 }

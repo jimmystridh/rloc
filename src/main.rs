@@ -42,6 +42,10 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
 
+    if !cli.sum_reports.is_empty() {
+        return sum_reports(&cli);
+    }
+
     if cli.threads > 0 {
         rayon::ThreadPoolBuilder::new()
             .num_threads(cli.threads)
@@ -276,4 +280,24 @@ fn render_to_writer(
             writeln!(out, "</results>")
         }
     }
+}
+
+fn sum_reports(cli: &Cli) -> Result<(), Box<dyn std::error::Error>> {
+    use stats::JsonOutput;
+
+    let mut reports = Vec::new();
+
+    for path in &cli.sum_reports {
+        let content = std::fs::read_to_string(path)
+            .map_err(|e| format!("Failed to read {}: {}", path.display(), e))?;
+        let report: JsonOutput = serde_json::from_str(&content)
+            .map_err(|e| format!("Failed to parse {}: {}", path.display(), e))?;
+        reports.push(report);
+    }
+
+    let combined = JsonOutput::sum_reports(reports);
+    let json = serde_json::to_string_pretty(&combined)?;
+    println!("{}", json);
+
+    Ok(())
 }

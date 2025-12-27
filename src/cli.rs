@@ -67,6 +67,9 @@ pub struct Cli {
     #[arg(long, value_name = "LANG", help = "Only count these languages")]
     pub include_lang: Vec<String>,
 
+    #[arg(long, value_name = "LANG,EXT", help = "Treat files with extension EXT as language LANG (e.g. Rust,txt)")]
+    pub force_lang: Vec<String>,
+
     #[arg(long, value_name = "REGEX", help = "Only count files in directories matching regex")]
     pub match_d: Option<String>,
 
@@ -127,6 +130,9 @@ pub struct Cli {
     #[arg(long, value_enum, default_value = "code", help = "Sort output by")]
     pub sort: SortField,
 
+    #[arg(long, value_name = "N", help = "Aggregate languages with fewer than N files into 'Other'")]
+    pub summary_cutoff: Option<usize>,
+
     #[arg(long, help = "Do not show rate statistics")]
     pub hide_rate: bool,
 
@@ -153,6 +159,9 @@ pub struct Cli {
 
     #[arg(long, help = "Print all known file extensions and exit")]
     pub show_ext: bool,
+
+    #[arg(long, value_name = "FILE", help = "Read and sum JSON reports from files")]
+    pub sum_reports: Vec<PathBuf>,
 
     #[arg(long, value_name = "N", default_value = "0", help = "Number of threads (0 = auto)")]
     pub threads: usize,
@@ -205,6 +214,14 @@ impl Cli {
         config.exclude_langs.extend(self.exclude_lang.iter().cloned());
         config.include_exts.extend(self.include_ext.iter().cloned());
         config.include_langs.extend(self.include_lang.iter().cloned());
+
+        for spec in &self.force_lang {
+            if let Some((lang, ext)) = spec.split_once(',') {
+                config.force_lang.insert(ext.to_lowercase(), lang.to_string());
+            } else {
+                return Err(format!("Invalid --force-lang format '{}', expected LANG,EXT", spec));
+            }
+        }
 
         if let Some(ref pattern) = self.match_d {
             config.match_dir = Some(Regex::new(pattern).map_err(|e| format!("Invalid --match-d regex: {}", e))?);
@@ -295,6 +312,7 @@ impl Cli {
             show_total_column: self.show_total,
             csv_delimiter: self.csv_delimiter.map(|c| c as u8).unwrap_or(b','),
             by_percent: self.by_percent,
+            summary_cutoff: self.summary_cutoff,
         }
     }
 
