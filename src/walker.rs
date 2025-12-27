@@ -1,4 +1,4 @@
-use crate::languages::{detect_language, Language, LANGUAGES};
+use crate::languages::{detect_language, get_language_ignore_case, Language};
 use ignore::overrides::OverrideBuilder;
 use ignore::WalkBuilder;
 use regex::Regex;
@@ -292,7 +292,7 @@ fn filter_files(files: Vec<PathBuf>, config: &WalkerConfig) -> Vec<FileEntry> {
         .filter_map(|path| {
             let language = if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
                 if let Some(forced_lang) = config.force_lang.get(&ext.to_lowercase()) {
-                    LANGUAGES.get(forced_lang.as_str())
+                    get_language_ignore_case(forced_lang)
                 } else {
                     detect_language(&path)
                 }

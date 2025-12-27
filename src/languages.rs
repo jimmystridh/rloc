@@ -1256,6 +1256,14 @@ pub fn get_language(name: &str) -> Option<&'static Language> {
     LANGUAGES.get(name)
 }
 
+pub fn get_language_ignore_case(name: &str) -> Option<&'static Language> {
+    LANGUAGES.get(name).or_else(|| {
+        LANGUAGES.entries()
+            .find(|(k, _)| k.eq_ignore_ascii_case(name))
+            .map(|(_, v)| v)
+    })
+}
+
 pub fn list_languages() -> impl Iterator<Item = (&'static str, &'static Language)> {
     LANGUAGES.entries().map(|(k, v)| (*k, v))
 }
