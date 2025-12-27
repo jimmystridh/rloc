@@ -83,7 +83,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
             if path.is_file() && archive::is_archive(path) {
                 let archive_dest = temp.join(path.file_stem().unwrap_or_default());
                 std::fs::create_dir_all(&archive_dest)?;
-                if let Ok(_) = archive::extract_archive(path, &archive_dest) {
+                if archive::extract_archive(path, &archive_dest).is_ok() {
                     extra_paths.push(archive_dest);
                 }
             }
