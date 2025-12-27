@@ -1271,3 +1271,159 @@ pub fn list_languages() -> impl Iterator<Item = (&'static str, &'static Language
 pub fn list_extensions() -> impl Iterator<Item = (&'static str, &'static str)> {
     EXTENSION_MAP.entries().map(|(k, v)| (*k, *v))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::Path;
+
+    #[test]
+    fn test_detect_language_by_extension() {
+        let cases = [
+            ("test.rs", "Rust"),
+            ("test.ts", "TypeScript"),
+            ("test.tsx", "TSX"),
+            ("test.js", "JavaScript"),
+            ("test.jsx", "JSX"),
+            ("test.py", "Python"),
+            ("test.go", "Go"),
+            ("test.java", "Java"),
+            ("test.c", "C"),
+            ("test.cpp", "C++"),
+            ("test.h", "C Header"),
+            ("test.hpp", "C++ Header"),
+            ("test.rb", "Ruby"),
+            ("test.sh", "Shell"),
+            ("test.css", "CSS"),
+            ("test.html", "HTML"),
+            ("test.json", "JSON"),
+            ("test.yaml", "YAML"),
+            ("test.yml", "YAML"),
+            ("test.toml", "TOML"),
+            ("test.md", "Markdown"),
+            ("test.sql", "SQL"),
+            ("test.swift", "Swift"),
+            ("test.kt", "Kotlin"),
+            ("test.cs", "C#"),
+        ];
+
+        for (filename, expected_lang) in cases {
+            let path = Path::new(filename);
+            let lang = detect_language(path);
+            assert!(
+                lang.is_some(),
+                "Failed to detect language for {}",
+                filename
+            );
+            assert_eq!(
+                lang.unwrap().name, expected_lang,
+                "Wrong language for {}: expected {}, got {}",
+                filename, expected_lang, lang.unwrap().name
+            );
+        }
+    }
+
+    #[test]
+    fn test_detect_language_by_filename() {
+        let cases = [
+            ("Makefile", "Makefile"),
+            ("Dockerfile", "Dockerfile"),
+            ("Justfile", "Just"),
+            ("CMakeLists.txt", "CMake"),
+            (".bashrc", "Bash"),
+            (".zshrc", "Zsh"),
+        ];
+
+        for (filename, expected_lang) in cases {
+            let path = Path::new(filename);
+            let lang = detect_language(path);
+            assert!(
+                lang.is_some(),
+                "Failed to detect language for {}",
+                filename
+            );
+            assert_eq!(
+                lang.unwrap().name, expected_lang,
+                "Wrong language for {}: expected {}, got {}",
+                filename, expected_lang, lang.unwrap().name
+            );
+        }
+    }
+
+    #[test]
+    fn test_get_language_ignore_case() {
+        // Exact match
+        assert!(get_language_ignore_case("TypeScript").is_some());
+        assert_eq!(get_language_ignore_case("TypeScript").unwrap().name, "TypeScript");
+
+        // Lowercase
+        assert!(get_language_ignore_case("typescript").is_some());
+        assert_eq!(get_language_ignore_case("typescript").unwrap().name, "TypeScript");
+
+        // Uppercase
+        assert!(get_language_ignore_case("TYPESCRIPT").is_some());
+        assert_eq!(get_language_ignore_case("TYPESCRIPT").unwrap().name, "TypeScript");
+
+        // Mixed case
+        assert!(get_language_ignore_case("typeScript").is_some());
+        assert_eq!(get_language_ignore_case("typeScript").unwrap().name, "TypeScript");
+
+        // Other languages
+        assert!(get_language_ignore_case("rust").is_some());
+        assert!(get_language_ignore_case("RUST").is_some());
+        assert!(get_language_ignore_case("python").is_some());
+        assert!(get_language_ignore_case("PYTHON").is_some());
+        assert!(get_language_ignore_case("javascript").is_some());
+        assert!(get_language_ignore_case("JAVASCRIPT").is_some());
+
+        // Non-existent language
+        assert!(get_language_ignore_case("NotARealLanguage").is_none());
+    }
+
+    #[test]
+    fn test_language_comment_styles() {
+        // C-style comments
+        let rust = LANGUAGES.get("Rust").unwrap();
+        assert!(rust.line_comments.contains(&"//"));
+        assert_eq!(rust.block_comment_start, Some("/*"));
+        assert_eq!(rust.block_comment_end, Some("*/"));
+
+        // Shell-style comments
+        let python = LANGUAGES.get("Python").unwrap();
+        assert!(python.line_comments.contains(&"#"));
+
+        // HTML-style comments
+        let html = LANGUAGES.get("HTML").unwrap();
+        assert_eq!(html.block_comment_start, Some("<!--"));
+        assert_eq!(html.block_comment_end, Some("-->"));
+
+        // No comments (data formats)
+        let json = LANGUAGES.get("JSON").unwrap();
+        assert!(json.line_comments.is_empty());
+        assert!(json.block_comment_start.is_none());
+    }
+
+    #[test]
+    fn test_nested_comments_flag() {
+        // Rust supports nested comments
+        let rust = LANGUAGES.get("Rust").unwrap();
+        assert!(rust.nested_comments);
+
+        // C does not
+        let c = LANGUAGES.get("C").unwrap();
+        assert!(!c.nested_comments);
+    }
+
+    #[test]
+    fn test_extension_map_completeness() {
+        // Verify common extensions are mapped
+        let required_exts = ["rs", "ts", "tsx", "js", "jsx", "py", "go", "java", "c", "cpp", "h", "rb", "sh"];
+        for ext in required_exts {
+            assert!(
+                EXTENSION_MAP.contains_key(ext),
+                "Missing extension mapping for .{}",
+                ext
+            );
+        }
+    }
+}

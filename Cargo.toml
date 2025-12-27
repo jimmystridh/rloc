@@ -37,6 +37,11 @@ zip = "2"
 tar = "0.4"
 flate2 = "1"
 
+[dev-dependencies]
+assert_cmd = "2"
+predicates = "3"
+tempfile = "3"
+
 [profile.release]
 lto = true
 codegen-units = 1

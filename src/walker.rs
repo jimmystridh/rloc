@@ -315,8 +315,11 @@ fn filter_files(files: Vec<PathBuf>, config: &WalkerConfig) -> Vec<FileEntry> {
 }
 
 #[cfg(test)]
+#[allow(clippy::field_reassign_with_default)]
 mod tests {
     use super::*;
+    use std::fs;
+    use tempfile::TempDir;
 
     #[test]
     fn test_default_excludes() {
@@ -324,5 +327,175 @@ mod tests {
         assert!(config.exclude_dirs.contains(&"node_modules".to_string()));
         assert!(config.exclude_dirs.contains(&"target".to_string()));
         assert!(config.exclude_dirs.contains(&".git".to_string()));
+    }
+
+    fn create_test_files(dir: &Path) {
+        fs::write(dir.join("test.rs"), "fn main() {}").unwrap();
+        fs::write(dir.join("test.ts"), "const x = 1;").unwrap();
+        fs::write(dir.join("test.tsx"), "const C = () => <div/>;").unwrap();
+        fs::write(dir.join("test.js"), "var x = 1;").unwrap();
+        fs::write(dir.join("test.py"), "x = 1").unwrap();
+    }
+
+    #[test]
+    fn test_force_lang_case_insensitive() {
+        let temp = TempDir::new().unwrap();
+        create_test_files(temp.path());
+
+        // Test with lowercase language name (the bug we fixed)
+        let mut config = WalkerConfig::default();
+        config.paths = vec![temp.path().to_path_buf()];
+        config.force_lang.insert("tsx".to_string(), "typescript".to_string());
+
+        let files = walk_files(&config);
+        let tsx_as_ts: Vec<_> = files.iter()
+            .filter(|f| f.path.extension().is_some_and(|e| e == "tsx"))
+            .collect();
+
+        assert_eq!(tsx_as_ts.len(), 1, "Should find the .tsx file");
+        assert_eq!(
+            tsx_as_ts[0].language.name, "TypeScript",
+            "TSX file should be detected as TypeScript with case-insensitive force_lang"
+        );
+    }
+
+    #[test]
+    fn test_force_lang_exact_case() {
+        let temp = TempDir::new().unwrap();
+        create_test_files(temp.path());
+
+        let mut config = WalkerConfig::default();
+        config.paths = vec![temp.path().to_path_buf()];
+        config.force_lang.insert("tsx".to_string(), "TypeScript".to_string());
+
+        let files = walk_files(&config);
+        let tsx_files: Vec<_> = files.iter()
+            .filter(|f| f.path.extension().is_some_and(|e| e == "tsx"))
+            .collect();
+
+        assert_eq!(tsx_files.len(), 1);
+        assert_eq!(tsx_files[0].language.name, "TypeScript");
+    }
+
+    #[test]
+    fn test_include_extensions() {
+        let temp = TempDir::new().unwrap();
+        create_test_files(temp.path());
+
+        let mut config = WalkerConfig::default();
+        config.paths = vec![temp.path().to_path_buf()];
+        config.include_exts = vec!["rs".to_string(), "ts".to_string()];
+
+        let files = walk_files(&config);
+        assert_eq!(files.len(), 2, "Should only include .rs and .ts files");
+
+        for file in &files {
+            let ext = file.path.extension().unwrap().to_str().unwrap();
+            assert!(
+                ext == "rs" || ext == "ts",
+                "Found unexpected extension: {}",
+                ext
+            );
+        }
+    }
+
+    #[test]
+    fn test_exclude_extensions() {
+        let temp = TempDir::new().unwrap();
+        create_test_files(temp.path());
+
+        let mut config = WalkerConfig::default();
+        config.paths = vec![temp.path().to_path_buf()];
+        config.exclude_exts = vec!["py".to_string()];
+
+        let files = walk_files(&config);
+        for file in &files {
+            let ext = file.path.extension().unwrap().to_str().unwrap();
+            assert_ne!(ext, "py", "Python files should be excluded");
+        }
+    }
+
+    #[test]
+    fn test_include_languages() {
+        let temp = TempDir::new().unwrap();
+        create_test_files(temp.path());
+
+        let mut config = WalkerConfig::default();
+        config.paths = vec![temp.path().to_path_buf()];
+        config.include_langs = vec!["rust".to_string()]; // lowercase to test case-insensitivity
+
+        let files = walk_files(&config);
+        assert_eq!(files.len(), 1, "Should only include Rust files");
+        assert_eq!(files[0].language.name, "Rust");
+    }
+
+    #[test]
+    fn test_exclude_languages() {
+        let temp = TempDir::new().unwrap();
+        create_test_files(temp.path());
+
+        let mut config = WalkerConfig::default();
+        config.paths = vec![temp.path().to_path_buf()];
+        config.exclude_langs = vec!["typescript".to_string(), "tsx".to_string()];
+
+        let files = walk_files(&config);
+        for file in &files {
+            assert!(
+                file.language.name != "TypeScript" && file.language.name != "TSX",
+                "TypeScript and TSX files should be excluded"
+            );
+        }
+    }
+
+    #[test]
+    fn test_max_depth() {
+        let temp = TempDir::new().unwrap();
+        let subdir = temp.path().join("subdir");
+        fs::create_dir(&subdir).unwrap();
+        fs::write(temp.path().join("root.rs"), "fn main() {}").unwrap();
+        fs::write(subdir.join("nested.rs"), "fn nested() {}").unwrap();
+
+        // With max_depth = 1, should only find root.rs
+        let mut config = WalkerConfig::default();
+        config.paths = vec![temp.path().to_path_buf()];
+        config.max_depth = Some(1);
+
+        let files = walk_files(&config);
+        assert_eq!(files.len(), 1, "Should only find files at root level");
+        assert!(files[0].path.file_name().unwrap() == "root.rs");
+    }
+
+    #[test]
+    fn test_exclude_dirs() {
+        let temp = TempDir::new().unwrap();
+        let excluded = temp.path().join("node_modules");
+        fs::create_dir(&excluded).unwrap();
+        fs::write(temp.path().join("main.rs"), "fn main() {}").unwrap();
+        fs::write(excluded.join("lib.js"), "var x = 1;").unwrap();
+
+        let mut config = WalkerConfig::default();
+        config.paths = vec![temp.path().to_path_buf()];
+        // node_modules is in default excludes
+
+        let files = walk_files(&config);
+        assert_eq!(files.len(), 1, "Should exclude node_modules");
+        assert!(files[0].path.file_name().unwrap() == "main.rs");
+    }
+
+    #[test]
+    fn test_force_lang_invalid_language_excluded() {
+        let temp = TempDir::new().unwrap();
+        fs::write(temp.path().join("test.xyz"), "some content").unwrap();
+
+        let mut config = WalkerConfig::default();
+        config.paths = vec![temp.path().to_path_buf()];
+        config.force_lang.insert("xyz".to_string(), "NotARealLanguage".to_string());
+
+        let files = walk_files(&config);
+        // File should be excluded because the forced language doesn't exist
+        assert!(
+            files.is_empty(),
+            "Files with invalid force_lang should be excluded"
+        );
     }
 }
