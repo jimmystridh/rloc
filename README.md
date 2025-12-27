@@ -23,17 +23,7 @@ rloc old_version/ --diff new_version/
 
 ## Example Output
 
-```
-$ rloc src/
-7 files processed in 0.002s (3241 files/s, 1282457 lines/s)
-
-┌──────────┬───────┬───────┬─────────┬──────┐
-│ Language ┆ Files ┆ Blank ┆ Comment ┆ Code │
-╞══════════╪═══════╪═══════╪═════════╪══════╡
-│ Rust     ┆ 7     ┆ 334   ┆ 91      ┆ 2345 │
-│ SUM      ┆ 7     ┆ 334   ┆ 91      ┆ 2345 │
-└──────────┴───────┴───────┴─────────┴──────┘
-```
+![rloc example output](assets/screenshot.png)
 
 ## Installation
 
