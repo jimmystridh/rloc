@@ -176,8 +176,8 @@ fn render_to_writer(
 
     match config.format {
         OutputFormat::Table => {
-            if !config.hide_rate
-                && let Some(elapsed) = summary.elapsed {
+            if !config.hide_rate {
+                if let Some(elapsed) = summary.elapsed {
                     writeln!(out)?;
                     write!(out, "{} files processed in {:.3}s", summary.total_files, elapsed.as_secs_f64())?;
                     if let (Some(fps), Some(lps)) = (summary.files_per_second(), summary.lines_per_second()) {
@@ -185,6 +185,7 @@ fn render_to_writer(
                     }
                     writeln!(out)?;
                 }
+            }
 
             writeln!(out)?;
             writeln!(out, "Language       Files    Blank  Comment     Code")?;

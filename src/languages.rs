@@ -1242,10 +1242,11 @@ pub fn detect_language(path: &Path) -> Option<&'static Language> {
         }
     }
 
-    if let Some(ext) = path.extension().and_then(|e| e.to_str())
-        && let Some(&lang_name) = EXTENSION_MAP.get(ext) {
+    if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+        if let Some(&lang_name) = EXTENSION_MAP.get(ext) {
             return LANGUAGES.get(lang_name);
         }
+    }
 
     None
 }

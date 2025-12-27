@@ -123,8 +123,8 @@ pub fn classify_line(line: &str, initial_state: State, lang: &Language) -> (Stat
                     continue;
                 }
 
-                if let Some(block_start) = lang.block_comment_start
-                    && remaining.starts_with(block_start) {
+                if let Some(block_start) = lang.block_comment_start {
+                    if remaining.starts_with(block_start) {
                         has_comment = true;
                         state = State::BlockComment { depth: 1 };
                         for _ in 0..block_start.chars().count().saturating_sub(1) {
@@ -132,6 +132,7 @@ pub fn classify_line(line: &str, initial_state: State, lang: &Language) -> (Stat
                         }
                         continue;
                     }
+                }
 
                 for &line_comment in lang.line_comments {
                     if remaining.starts_with(line_comment) {
@@ -157,8 +158,8 @@ pub fn classify_line(line: &str, initial_state: State, lang: &Language) -> (Stat
             }
 
             State::BlockComment { depth } => {
-                if let Some(block_end) = lang.block_comment_end
-                    && remaining.starts_with(block_end) {
+                if let Some(block_end) = lang.block_comment_end {
+                    if remaining.starts_with(block_end) {
                         let new_depth = depth - 1;
                         if new_depth == 0 {
                             state = State::Code;
@@ -170,16 +171,19 @@ pub fn classify_line(line: &str, initial_state: State, lang: &Language) -> (Stat
                         }
                         continue;
                     }
+                }
 
-                if lang.nested_comments
-                    && let Some(block_start) = lang.block_comment_start
-                        && remaining.starts_with(block_start) {
+                if lang.nested_comments {
+                    if let Some(block_start) = lang.block_comment_start {
+                        if remaining.starts_with(block_start) {
                             state = State::BlockComment { depth: depth + 1 };
                             for _ in 0..block_start.chars().count().saturating_sub(1) {
                                 chars.next();
                             }
                             continue;
                         }
+                    }
+                }
             }
 
             State::String { delimiter } => {

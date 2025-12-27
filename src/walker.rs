@@ -100,10 +100,11 @@ pub fn walk_files(config: &WalkerConfig) -> Vec<FileEntry> {
         return walk_git_files(config);
     }
 
-    if let Some(VcsMode::Auto) = config.vcs
-        && Path::new(".git").exists() {
+    if let Some(VcsMode::Auto) = config.vcs {
+        if Path::new(".git").exists() {
             return walk_git_files(config);
         }
+    }
 
     walk_filesystem(config)
 }
