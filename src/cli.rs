@@ -22,6 +22,9 @@ pub struct Cli {
     )]
     pub paths: Vec<PathBuf>,
 
+    #[arg(long, value_name = "PATH", help = "Compare against another set of files/directories")]
+    pub diff: Option<PathBuf>,
+
     #[arg(long, help = "Report results for every source file")]
     pub by_file: bool,
 
@@ -100,6 +103,9 @@ pub struct Cli {
     #[arg(long, help = "Follow symbolic links")]
     pub follow_symlinks: bool,
 
+    #[arg(long, help = "Process archive files (zip, tar, tar.gz)")]
+    pub extract_archives: bool,
+
     #[arg(long, help = "Include hidden files and directories")]
     pub hidden: bool,
 
@@ -159,6 +165,9 @@ pub struct Cli {
 
     #[arg(long, help = "Print all known file extensions and exit")]
     pub show_ext: bool,
+
+    #[arg(long, value_name = "FILE", help = "Load custom language definitions from YAML file")]
+    pub read_lang_def: Option<PathBuf>,
 
     #[arg(long, value_name = "EXT", help = "Write files with comments removed (output to <file>.<EXT>)")]
     pub strip_comments: Option<String>,

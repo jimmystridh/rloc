@@ -33,6 +33,9 @@ bstr = "1"
 ahash = "0.8"
 dashmap = "6"
 phf = { version = "0.11", features = ["macros"] }
+zip = "2"
+tar = "0.4"
+flate2 = "1"
 
 [profile.release]
 lto = true

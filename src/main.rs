@@ -1,5 +1,8 @@
+mod archive;
 mod cli;
 mod counter;
+mod custom_langs;
+mod diff;
 mod languages;
 mod output;
 mod stats;
@@ -43,12 +46,20 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
 
+    if let Some(ref path) = cli.read_lang_def {
+        custom_langs::CustomLanguages::load(path)?;
+    }
+
     if !cli.sum_reports.is_empty() {
         return sum_reports(&cli);
     }
 
     if cli.strip_comments.is_some() || cli.strip_code.is_some() {
         return run_strip(&cli);
+    }
+
+    if let Some(ref diff_path) = cli.diff {
+        return run_diff(&cli, diff_path);
     }
 
     if cli.threads > 0 {
@@ -58,10 +69,31 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
             .ok();
     }
 
-    let walker_config = cli.to_walker_config()?;
+    let mut walker_config = cli.to_walker_config()?;
     let output_config = cli.to_output_config();
 
     let start = Instant::now();
+
+    let temp_dir = if cli.extract_archives {
+        let temp = std::env::temp_dir().join(format!("rloc-{}", std::process::id()));
+        std::fs::create_dir_all(&temp)?;
+
+        let mut extra_paths = Vec::new();
+        for path in &walker_config.paths {
+            if path.is_file() && archive::is_archive(path) {
+                let archive_dest = temp.join(path.file_stem().unwrap_or_default());
+                std::fs::create_dir_all(&archive_dest)?;
+                if let Ok(_) = archive::extract_archive(path, &archive_dest) {
+                    extra_paths.push(archive_dest);
+                }
+            }
+        }
+
+        walker_config.paths.extend(extra_paths);
+        Some(temp)
+    } else {
+        None
+    };
 
     let files = walk_files(&walker_config);
 
@@ -126,6 +158,10 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         writer.flush()?;
     } else {
         render(&summary, &output_config)?;
+    }
+
+    if let Some(temp) = temp_dir {
+        let _ = std::fs::remove_dir_all(temp);
     }
 
     Ok(())
@@ -347,6 +383,17 @@ fn run_strip(cli: &Cli) -> Result<(), Box<dyn std::error::Error>> {
     if !cli.quiet {
         eprintln!("Processed {} files ({} errors)", processed, errors);
     }
+
+    Ok(())
+}
+
+fn run_diff(cli: &Cli, diff_path: &std::path::Path) -> Result<(), Box<dyn std::error::Error>> {
+    let config1 = cli.to_walker_config()?;
+    let mut config2 = config1.clone();
+    config2.paths = vec![diff_path.to_path_buf()];
+
+    let result = diff::compute_diff(&config1, &config2, cli.verbose > 0);
+    diff::render_diff(&result);
 
     Ok(())
 }
