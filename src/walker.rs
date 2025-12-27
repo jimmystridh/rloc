@@ -8,6 +8,7 @@ use std::process::Command;
 #[derive(Debug, Clone)]
 pub struct WalkerConfig {
     pub paths: Vec<PathBuf>,
+    pub list_file: Option<PathBuf>,
     pub exclude_dirs: Vec<String>,
     pub exclude_exts: Vec<String>,
     pub exclude_langs: Vec<String>,
@@ -17,12 +18,15 @@ pub struct WalkerConfig {
     pub not_match_dir: Vec<Regex>,
     pub match_file: Option<Regex>,
     pub not_match_file: Vec<Regex>,
+    pub include_content: Option<Regex>,
+    pub exclude_content: Option<Regex>,
     pub vcs: Option<VcsMode>,
     pub follow_symlinks: bool,
     pub hidden: bool,
     pub fullpath: bool,
     pub max_depth: Option<usize>,
     pub skip_gitignore: bool,
+    pub skip_uniqueness: bool,
     pub include_submodules: bool,
     pub max_file_size: Option<u64>,
 }
@@ -38,6 +42,7 @@ impl Default for WalkerConfig {
     fn default() -> Self {
         Self {
             paths: vec![PathBuf::from(".")],
+            list_file: None,
             exclude_dirs: vec![
                 ".git".into(),
                 ".svn".into(),
@@ -63,12 +68,15 @@ impl Default for WalkerConfig {
             not_match_dir: vec![],
             match_file: None,
             not_match_file: vec![],
+            include_content: None,
+            exclude_content: None,
             vcs: None,
             follow_symlinks: false,
             hidden: false,
             fullpath: false,
             max_depth: None,
             skip_gitignore: false,
+            skip_uniqueness: false,
             include_submodules: false,
             max_file_size: None,
         }
@@ -81,6 +89,10 @@ pub struct FileEntry {
 }
 
 pub fn walk_files(config: &WalkerConfig) -> Vec<FileEntry> {
+    if let Some(ref list_file) = config.list_file {
+        return walk_list_file(list_file, config);
+    }
+
     if let Some(VcsMode::Git) = config.vcs {
         return walk_git_files(config);
     }
@@ -91,6 +103,21 @@ pub fn walk_files(config: &WalkerConfig) -> Vec<FileEntry> {
         }
 
     walk_filesystem(config)
+}
+
+fn walk_list_file(list_file: &Path, config: &WalkerConfig) -> Vec<FileEntry> {
+    let content = match std::fs::read_to_string(list_file) {
+        Ok(c) => c,
+        Err(_) => return Vec::new(),
+    };
+
+    let files: Vec<PathBuf> = content
+        .lines()
+        .filter(|line| !line.trim().is_empty())
+        .map(PathBuf::from)
+        .collect();
+
+    filter_files(files, config)
 }
 
 fn walk_git_files(config: &WalkerConfig) -> Vec<FileEntry> {
@@ -235,6 +262,23 @@ fn filter_files(files: Vec<PathBuf>, config: &WalkerConfig) -> Vec<FileEntry> {
                         .unwrap_or_default()
                 };
                 if regex.is_match(&dir_name) {
+                    return false;
+                }
+            }
+
+            if config.include_content.is_some() || config.exclude_content.is_some() {
+                if let Ok(content) = std::fs::read_to_string(path) {
+                    if let Some(ref regex) = config.include_content {
+                        if !regex.is_match(&content) {
+                            return false;
+                        }
+                    }
+                    if let Some(ref regex) = config.exclude_content {
+                        if regex.is_match(&content) {
+                            return false;
+                        }
+                    }
+                } else {
                     return false;
                 }
             }

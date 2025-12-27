@@ -79,6 +79,12 @@ pub struct Cli {
     #[arg(long, value_name = "REGEX", help = "Exclude files matching regex")]
     pub not_match_f: Vec<String>,
 
+    #[arg(long, value_name = "REGEX", help = "Only count files containing content matching regex")]
+    pub include_content: Option<String>,
+
+    #[arg(long, value_name = "REGEX", help = "Exclude files containing content matching regex")]
+    pub exclude_content: Option<String>,
+
     #[arg(long, help = "Use full path in regex matching")]
     pub fullpath: bool,
 
@@ -100,8 +106,14 @@ pub struct Cli {
     #[arg(long, help = "Don't respect .gitignore files")]
     pub skip_gitignore: bool,
 
+    #[arg(long, help = "Skip file uniqueness check (count duplicate files multiple times)")]
+    pub skip_uniqueness: bool,
+
     #[arg(long, help = "Include files in git submodules (requires Git 2.11+)")]
     pub include_submodules: bool,
+
+    #[arg(long, value_name = "FILE", help = "Read file paths from FILE (one per line)")]
+    pub list_file: Option<PathBuf>,
 
     #[arg(long, value_name = "N", help = "Maximum directory depth")]
     pub max_depth: Option<usize>,
@@ -182,6 +194,8 @@ impl Cli {
             config.paths = self.paths.clone();
         }
 
+        config.list_file = self.list_file.clone();
+
         if self.no_ignore {
             config.exclude_dirs.clear();
         }
@@ -212,6 +226,14 @@ impl Cli {
             );
         }
 
+        if let Some(ref pattern) = self.include_content {
+            config.include_content = Some(Regex::new(pattern).map_err(|e| format!("Invalid --include-content regex: {}", e))?);
+        }
+
+        if let Some(ref pattern) = self.exclude_content {
+            config.exclude_content = Some(Regex::new(pattern).map_err(|e| format!("Invalid --exclude-content regex: {}", e))?);
+        }
+
         config.vcs = self.vcs.or(self.files_from).map(|v| match v {
             Vcs::Auto => VcsMode::Auto,
             Vcs::Git => VcsMode::Git,
@@ -223,6 +245,7 @@ impl Cli {
         config.fullpath = self.fullpath;
         config.max_depth = if self.no_recurse { Some(1) } else { self.max_depth };
         config.skip_gitignore = self.skip_gitignore;
+        config.skip_uniqueness = self.skip_uniqueness;
         config.include_submodules = self.include_submodules;
         config.max_file_size = self.max_file_size;
 

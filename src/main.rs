@@ -7,7 +7,8 @@ mod walker;
 
 use clap::Parser;
 use cli::Cli;
-use counter::count_lines;
+use counter::{compute_file_hash, count_lines};
+use dashmap::DashSet;
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressStyle};
 use output::render;
 use rayon::prelude::*;
@@ -63,6 +64,8 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let file_count = files.len();
+    let skip_uniqueness = walker_config.skip_uniqueness;
+    let seen_hashes: DashSet<u64> = DashSet::new();
 
     let progress = if cli.quiet || output_config.format != output::OutputFormat::Table {
         ProgressBar::hidden()
@@ -81,6 +84,14 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         .into_par_iter()
         .progress_with(progress.clone())
         .filter_map(|entry| {
+            if !skip_uniqueness {
+                if let Ok(hash) = compute_file_hash(&entry.path) {
+                    if !seen_hashes.insert(hash) {
+                        return None;
+                    }
+                }
+            }
+
             match count_lines(&entry.path, entry.language) {
                 Ok(stats) if stats.total() > 0 => Some(stats),
                 Ok(_) => None,

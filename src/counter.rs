@@ -1,5 +1,6 @@
 use crate::languages::Language;
 use std::fs::File;
+use std::hash::{Hash, Hasher};
 use std::io::{BufRead, BufReader, Read};
 use std::path::Path;
 
@@ -220,6 +221,13 @@ fn is_binary(file: &File) -> std::io::Result<bool> {
     let binary_threshold = bytes_read / 10;
 
     Ok(null_count > binary_threshold.max(1))
+}
+
+pub fn compute_file_hash(path: &Path) -> std::io::Result<u64> {
+    let content = std::fs::read(path)?;
+    let mut hasher = ahash::AHasher::default();
+    content.hash(&mut hasher);
+    Ok(hasher.finish())
 }
 
 #[cfg(test)]

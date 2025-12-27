@@ -31,6 +31,7 @@ encoding_rs_io = "0.1"
 memmap2 = "0.9"
 bstr = "1"
 ahash = "0.8"
+dashmap = "6"
 phf = { version = "0.11", features = ["macros"] }
 
 [profile.release]
