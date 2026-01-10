@@ -1,5 +1,5 @@
-use crate::counter::{count_lines, FileStats};
-use crate::walker::{walk_files, FileEntry, WalkerConfig};
+use crate::counter::{FileStats, count_lines};
+use crate::walker::{FileEntry, WalkerConfig, walk_files};
 use std::collections::HashMap;
 use std::path::PathBuf;
 

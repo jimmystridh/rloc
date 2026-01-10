@@ -1,4 +1,4 @@
-use crate::counter::{classify_line, LineType, State};
+use crate::counter::{LineType, State, classify_line};
 use crate::languages::Language;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};

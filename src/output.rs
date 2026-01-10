@@ -1,6 +1,6 @@
 use crate::stats::{JsonOutput, LanguageStats, Summary};
 use comfy_table::{
-    presets::UTF8_FULL_CONDENSED, Attribute, Cell, Color, ContentArrangement, Table,
+    Attribute, Cell, Color, ContentArrangement, Table, presets::UTF8_FULL_CONDENSED,
 };
 use std::io::{self, Write};
 

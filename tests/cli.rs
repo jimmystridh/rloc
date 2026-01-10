@@ -9,7 +9,11 @@ fn rloc() -> Command {
 }
 
 fn create_test_project(dir: &std::path::Path) {
-    fs::write(dir.join("main.rs"), "fn main() {\n    println!(\"Hello\");\n}\n").unwrap();
+    fs::write(
+        dir.join("main.rs"),
+        "fn main() {\n    println!(\"Hello\");\n}\n",
+    )
+    .unwrap();
     fs::write(dir.join("lib.ts"), "// TypeScript\nconst x: number = 1;\n").unwrap();
     fs::write(dir.join("app.tsx"), "// TSX\nconst C = () => <div/>;\n").unwrap();
     fs::write(dir.join("script.py"), "# Python\nx = 1\n").unwrap();
@@ -51,7 +55,9 @@ fn test_csv_output() {
         .arg("--csv")
         .assert()
         .success()
-        .stdout(predicate::str::contains("Language,Files,Blank,Comment,Code"));
+        .stdout(predicate::str::contains(
+            "Language,Files,Blank,Comment,Code",
+        ));
 }
 
 #[test]
@@ -202,11 +208,7 @@ fn test_quiet_mode() {
     let temp = TempDir::new().unwrap();
     create_test_project(temp.path());
 
-    rloc()
-        .arg(temp.path())
-        .arg("--quiet")
-        .assert()
-        .success();
+    rloc().arg(temp.path()).arg("--quiet").assert().success();
 }
 
 #[test]

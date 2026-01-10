@@ -439,7 +439,7 @@ impl Cli {
 
 pub fn show_languages() {
     use crate::languages::list_languages;
-    use comfy_table::{presets::UTF8_FULL_CONDENSED, Table};
+    use comfy_table::{Table, presets::UTF8_FULL_CONDENSED};
 
     let mut table = Table::new();
     table.load_preset(UTF8_FULL_CONDENSED);
@@ -469,7 +469,7 @@ pub fn show_languages() {
 
 pub fn show_extensions() {
     use crate::languages::list_extensions;
-    use comfy_table::{presets::UTF8_FULL_CONDENSED, Table};
+    use comfy_table::{Table, presets::UTF8_FULL_CONDENSED};
 
     let mut table = Table::new();
     table.load_preset(UTF8_FULL_CONDENSED);

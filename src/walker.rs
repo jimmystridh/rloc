@@ -1,6 +1,6 @@
-use crate::languages::{detect_language, get_language_ignore_case, Language};
-use ignore::overrides::OverrideBuilder;
+use crate::languages::{Language, detect_language, get_language_ignore_case};
 use ignore::WalkBuilder;
+use ignore::overrides::OverrideBuilder;
 use regex::Regex;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};

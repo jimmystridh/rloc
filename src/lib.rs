@@ -53,7 +53,7 @@ use dashmap::DashSet;
 use rayon::prelude::*;
 use std::path::Path;
 
-pub use languages::{detect_language, list_extensions, list_languages, Language, LANGUAGES};
+pub use languages::{LANGUAGES, Language, detect_language, list_extensions, list_languages};
 
 mod error;
 pub use error::Error;

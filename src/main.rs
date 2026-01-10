@@ -4,7 +4,7 @@ use indicatif::{ParallelProgressIterator, ProgressBar, ProgressStyle};
 use rayon::prelude::*;
 use rloc::cli::Cli;
 use rloc::diff;
-use rloc::output::{self, render, OutputFormat};
+use rloc::output::{self, OutputFormat, render};
 use rloc::strip::{self, StripMode};
 use std::fs::File;
 use std::io::{self, BufWriter, Write};
