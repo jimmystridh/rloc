@@ -42,6 +42,53 @@ cargo build --release
 cargo install rloc
 ```
 
+## Library Usage
+
+`rloc` can also be used as a library in your Rust projects:
+
+```toml
+[dependencies]
+rloc = { version = "0.1", default-features = false }
+```
+
+### Examples
+
+```rust
+use std::path::Path;
+
+// Get the top language in a directory (by lines of code)
+let top = rloc::top_language(Path::new(".")).unwrap();
+println!("Top language: {} ({} lines of code)", top.name, top.code);
+
+// Fast mode: only count files by extension (no file reads)
+let top_fast = rloc::top_language_fast(Path::new(".")).unwrap();
+println!("Top language: {} ({} files)", top_fast.name, top_fast.files);
+
+// Full analysis with all languages
+let analysis = rloc::analyze(Path::new(".")).unwrap();
+for lang in &analysis.languages {
+    println!("{}: {} files, {} lines of code", lang.name, lang.files, lang.code);
+}
+
+// Detect language for a single file
+if let Some(lang) = rloc::detect_language(Path::new("main.rs")) {
+    println!("Detected: {}", lang.name);
+}
+```
+
+### Configurable Analysis
+
+```rust
+use rloc::AnalyzeConfig;
+
+let config = AnalyzeConfig::new(".")
+    .include_langs(vec!["Rust".into(), "Python".into()])
+    .exclude_dirs(vec!["target".into(), "venv".into()])
+    .max_depth(3);
+
+let analysis = rloc::analyze_with_config(config).unwrap();
+```
+
 ## Why rloc?
 
 - **Fast**: Parallel processing with [rayon](https://github.com/rayon-rs/rayon). Typically 100-125x faster than cloc.
