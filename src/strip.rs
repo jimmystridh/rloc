@@ -36,30 +36,26 @@ pub fn strip_file(
         state = new_state;
 
         match mode {
-            StripMode::Comments => {
-                match line_type {
-                    LineType::Code | LineType::Blank => writeln!(output, "{}", line)?,
-                    LineType::Mixed => {
-                        if let Some(stripped) = strip_comment_from_line(&line, language) {
-                            writeln!(output, "{}", stripped)?;
-                        } else {
-                            writeln!(output, "{}", line)?;
-                        }
+            StripMode::Comments => match line_type {
+                LineType::Code | LineType::Blank => writeln!(output, "{}", line)?,
+                LineType::Mixed => {
+                    if let Some(stripped) = strip_comment_from_line(&line, language) {
+                        writeln!(output, "{}", stripped)?;
+                    } else {
+                        writeln!(output, "{}", line)?;
                     }
-                    LineType::Comment => {}
                 }
-            }
-            StripMode::Code => {
-                match line_type {
-                    LineType::Comment => writeln!(output, "{}", line)?,
-                    LineType::Mixed => {
-                        if let Some(comment) = extract_comment_from_line(&line, language) {
-                            writeln!(output, "{}", comment)?;
-                        }
+                LineType::Comment => {}
+            },
+            StripMode::Code => match line_type {
+                LineType::Comment => writeln!(output, "{}", line)?,
+                LineType::Mixed => {
+                    if let Some(comment) = extract_comment_from_line(&line, language) {
+                        writeln!(output, "{}", comment)?;
                     }
-                    LineType::Code | LineType::Blank => {}
                 }
-            }
+                LineType::Code | LineType::Blank => {}
+            },
         }
     }
 

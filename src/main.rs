@@ -1,27 +1,15 @@
-mod archive;
-mod cli;
-mod counter;
-mod custom_langs;
-mod diff;
-mod languages;
-mod output;
-mod stats;
-mod strip;
-mod walker;
-
 use clap::Parser;
-use cli::Cli;
-use counter::{compute_file_hash, count_lines};
 use dashmap::DashSet;
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressStyle};
-use output::render;
 use rayon::prelude::*;
-use stats::Summary;
+use rloc::cli::Cli;
+use rloc::diff;
+use rloc::output::{self, render, OutputFormat};
+use rloc::strip::{self, StripMode};
 use std::fs::File;
 use std::io::{self, BufWriter, Write};
 use std::process::ExitCode;
 use std::time::Instant;
-use walker::walk_files;
 
 fn main() -> ExitCode {
     match run() {
@@ -37,17 +25,17 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
 
     if cli.show_lang {
-        cli::show_languages();
+        rloc::cli::show_languages();
         return Ok(());
     }
 
     if cli.show_ext {
-        cli::show_extensions();
+        rloc::cli::show_extensions();
         return Ok(());
     }
 
     if let Some(ref path) = cli.read_lang_def {
-        custom_langs::CustomLanguages::load(path)?;
+        rloc::custom_langs::CustomLanguages::load(path)?;
     }
 
     if !cli.sum_reports.is_empty() {
@@ -80,10 +68,10 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
 
         let mut extra_paths = Vec::new();
         for path in &walker_config.paths {
-            if path.is_file() && archive::is_archive(path) {
+            if path.is_file() && rloc::archive::is_archive(path) {
                 let archive_dest = temp.join(path.file_stem().unwrap_or_default());
                 std::fs::create_dir_all(&archive_dest)?;
-                if archive::extract_archive(path, &archive_dest).is_ok() {
+                if rloc::archive::extract_archive(path, &archive_dest).is_ok() {
                     extra_paths.push(archive_dest);
                 }
             }
@@ -95,7 +83,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         None
     };
 
-    let files = walk_files(&walker_config);
+    let files = rloc::walker::walk_files(&walker_config);
 
     if files.is_empty() {
         if !cli.quiet {
@@ -108,7 +96,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     let skip_uniqueness = walker_config.skip_uniqueness;
     let seen_hashes: DashSet<u64> = DashSet::new();
 
-    let progress = if cli.quiet || output_config.format != output::OutputFormat::Table {
+    let progress = if cli.quiet || output_config.format != OutputFormat::Table {
         ProgressBar::hidden()
     } else {
         let pb = ProgressBar::new(file_count as u64);
@@ -126,14 +114,14 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         .progress_with(progress.clone())
         .filter_map(|entry| {
             if !skip_uniqueness {
-                if let Ok(hash) = compute_file_hash(&entry.path) {
+                if let Ok(hash) = rloc::counter::compute_file_hash(&entry.path) {
                     if !seen_hashes.insert(hash) {
                         return None;
                     }
                 }
             }
 
-            match count_lines(&entry.path, entry.language) {
+            match rloc::counter::count_lines(&entry.path, entry.language) {
                 Ok(stats) if stats.total() > 0 => Some(stats),
                 Ok(_) => None,
                 Err(e) => {
@@ -149,7 +137,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     progress.finish_and_clear();
 
     let elapsed = start.elapsed();
-    let summary = Summary::from_file_stats(file_stats).with_elapsed(elapsed);
+    let summary = rloc::stats::Summary::from_file_stats(file_stats).with_elapsed(elapsed);
 
     if let Some(output_path) = cli.output_path() {
         let file = File::create(output_path)?;
@@ -168,19 +156,24 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn render_to_writer(
-    summary: &Summary,
+    summary: &rloc::stats::Summary,
     config: &output::OutputConfig,
     out: &mut impl Write,
 ) -> io::Result<()> {
-    use output::OutputFormat;
-
     match config.format {
         OutputFormat::Table => {
             if !config.hide_rate {
                 if let Some(elapsed) = summary.elapsed {
                     writeln!(out)?;
-                    write!(out, "{} files processed in {:.3}s", summary.total_files, elapsed.as_secs_f64())?;
-                    if let (Some(fps), Some(lps)) = (summary.files_per_second(), summary.lines_per_second()) {
+                    write!(
+                        out,
+                        "{} files processed in {:.3}s",
+                        summary.total_files,
+                        elapsed.as_secs_f64()
+                    )?;
+                    if let (Some(fps), Some(lps)) =
+                        (summary.files_per_second(), summary.lines_per_second())
+                    {
                         write!(out, " ({:.0} files/s, {:.0} lines/s)", fps, lps)?;
                     }
                     writeln!(out)?;
@@ -203,14 +196,17 @@ fn render_to_writer(
             writeln!(
                 out,
                 "{:<14} {:>5} {:>8} {:>8} {:>8}",
-                "SUM", summary.total_files, summary.total_blanks, summary.total_comments, summary.total_code
+                "SUM",
+                summary.total_files,
+                summary.total_blanks,
+                summary.total_comments,
+                summary.total_code
             )?;
             Ok(())
         }
         OutputFormat::Json => {
-            let output = stats::JsonOutput::from(summary);
-            let json = serde_json::to_string_pretty(&output)
-                .map_err(io::Error::other)?;
+            let output = rloc::stats::JsonOutput::from(summary);
+            let json = serde_json::to_string_pretty(&output).map_err(io::Error::other)?;
             writeln!(out, "{}", json)
         }
         OutputFormat::Csv => {
@@ -236,9 +232,8 @@ fn render_to_writer(
             Ok(())
         }
         OutputFormat::Yaml => {
-            let output = stats::JsonOutput::from(summary);
-            let yaml = serde_yaml::to_string(&output)
-                .map_err(io::Error::other)?;
+            let output = rloc::stats::JsonOutput::from(summary);
+            let yaml = serde_yaml::to_string(&output).map_err(io::Error::other)?;
             write!(out, "{}", yaml)
         }
         OutputFormat::Markdown => {
@@ -254,7 +249,10 @@ fn render_to_writer(
             writeln!(
                 out,
                 "| **SUM** | **{}** | **{}** | **{}** | **{}** |",
-                summary.total_files, summary.total_blanks, summary.total_comments, summary.total_code
+                summary.total_files,
+                summary.total_blanks,
+                summary.total_comments,
+                summary.total_code
             )
         }
         OutputFormat::Sql => {
@@ -296,13 +294,22 @@ fn render_to_writer(
                 writeln!(out, "  <header>")?;
                 writeln!(out, "    <n_files>{}</n_files>", summary.total_files)?;
                 writeln!(out, "    <n_lines>{}</n_lines>", summary.total_lines())?;
-                writeln!(out, "    <elapsed_seconds>{:.3}</elapsed_seconds>", elapsed.as_secs_f64())?;
+                writeln!(
+                    out,
+                    "    <elapsed_seconds>{:.3}</elapsed_seconds>",
+                    elapsed.as_secs_f64()
+                )?;
                 writeln!(out, "  </header>")?;
             }
 
             writeln!(out, "  <languages>")?;
             for lang in &summary.languages {
-                let escaped_name = lang.name.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;").replace('"', "&quot;");
+                let escaped_name = lang
+                    .name
+                    .replace('&', "&amp;")
+                    .replace('<', "&lt;")
+                    .replace('>', "&gt;")
+                    .replace('"', "&quot;");
                 writeln!(out, "    <language name=\"{}\">", escaped_name)?;
                 writeln!(out, "      <files>{}</files>", lang.files)?;
                 writeln!(out, "      <blank>{}</blank>", lang.blanks)?;
@@ -325,7 +332,7 @@ fn render_to_writer(
 }
 
 fn sum_reports(cli: &Cli) -> Result<(), Box<dyn std::error::Error>> {
-    use stats::JsonOutput;
+    use rloc::stats::JsonOutput;
 
     let mut reports = Vec::new();
 
@@ -345,10 +352,8 @@ fn sum_reports(cli: &Cli) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn run_strip(cli: &Cli) -> Result<(), Box<dyn std::error::Error>> {
-    use strip::{strip_file, StripMode};
-
     let walker_config = cli.to_walker_config()?;
-    let files = walk_files(&walker_config);
+    let files = rloc::walker::walk_files(&walker_config);
 
     let (mode, ext) = if let Some(ref ext) = cli.strip_comments {
         (StripMode::Comments, ext.as_str())
@@ -362,10 +367,15 @@ fn run_strip(cli: &Cli) -> Result<(), Box<dyn std::error::Error>> {
     let mut errors = 0;
 
     for entry in files {
-        match strip_file(&entry.path, entry.language, match mode {
-            StripMode::Comments => StripMode::Comments,
-            StripMode::Code => StripMode::Code,
-        }, ext) {
+        match strip::strip_file(
+            &entry.path,
+            entry.language,
+            match mode {
+                StripMode::Comments => StripMode::Comments,
+                StripMode::Code => StripMode::Code,
+            },
+            ext,
+        ) {
             Ok(()) => {
                 processed += 1;
                 if cli.verbose > 0 {

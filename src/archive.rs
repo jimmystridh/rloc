@@ -25,7 +25,10 @@ pub fn extract_archive(path: &Path, dest: &Path) -> io::Result<Vec<PathBuf>> {
     } else if ext == "gz" {
         extract_tar_gz(path, dest)
     } else {
-        Err(io::Error::new(io::ErrorKind::InvalidInput, "Unknown archive format"))
+        Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "Unknown archive format",
+        ))
     }
 }
 

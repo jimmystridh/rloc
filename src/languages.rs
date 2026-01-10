@@ -1258,7 +1258,8 @@ pub fn get_language(name: &str) -> Option<&'static Language> {
 
 pub fn get_language_ignore_case(name: &str) -> Option<&'static Language> {
     LANGUAGES.get(name).or_else(|| {
-        LANGUAGES.entries()
+        LANGUAGES
+            .entries()
             .find(|(k, _)| k.eq_ignore_ascii_case(name))
             .map(|(_, v)| v)
     })
@@ -1310,15 +1311,14 @@ mod tests {
         for (filename, expected_lang) in cases {
             let path = Path::new(filename);
             let lang = detect_language(path);
-            assert!(
-                lang.is_some(),
-                "Failed to detect language for {}",
-                filename
-            );
+            assert!(lang.is_some(), "Failed to detect language for {}", filename);
             assert_eq!(
-                lang.unwrap().name, expected_lang,
+                lang.unwrap().name,
+                expected_lang,
                 "Wrong language for {}: expected {}, got {}",
-                filename, expected_lang, lang.unwrap().name
+                filename,
+                expected_lang,
+                lang.unwrap().name
             );
         }
     }
@@ -1337,15 +1337,14 @@ mod tests {
         for (filename, expected_lang) in cases {
             let path = Path::new(filename);
             let lang = detect_language(path);
-            assert!(
-                lang.is_some(),
-                "Failed to detect language for {}",
-                filename
-            );
+            assert!(lang.is_some(), "Failed to detect language for {}", filename);
             assert_eq!(
-                lang.unwrap().name, expected_lang,
+                lang.unwrap().name,
+                expected_lang,
                 "Wrong language for {}: expected {}, got {}",
-                filename, expected_lang, lang.unwrap().name
+                filename,
+                expected_lang,
+                lang.unwrap().name
             );
         }
     }
@@ -1354,19 +1353,31 @@ mod tests {
     fn test_get_language_ignore_case() {
         // Exact match
         assert!(get_language_ignore_case("TypeScript").is_some());
-        assert_eq!(get_language_ignore_case("TypeScript").unwrap().name, "TypeScript");
+        assert_eq!(
+            get_language_ignore_case("TypeScript").unwrap().name,
+            "TypeScript"
+        );
 
         // Lowercase
         assert!(get_language_ignore_case("typescript").is_some());
-        assert_eq!(get_language_ignore_case("typescript").unwrap().name, "TypeScript");
+        assert_eq!(
+            get_language_ignore_case("typescript").unwrap().name,
+            "TypeScript"
+        );
 
         // Uppercase
         assert!(get_language_ignore_case("TYPESCRIPT").is_some());
-        assert_eq!(get_language_ignore_case("TYPESCRIPT").unwrap().name, "TypeScript");
+        assert_eq!(
+            get_language_ignore_case("TYPESCRIPT").unwrap().name,
+            "TypeScript"
+        );
 
         // Mixed case
         assert!(get_language_ignore_case("typeScript").is_some());
-        assert_eq!(get_language_ignore_case("typeScript").unwrap().name, "TypeScript");
+        assert_eq!(
+            get_language_ignore_case("typeScript").unwrap().name,
+            "TypeScript"
+        );
 
         // Other languages
         assert!(get_language_ignore_case("rust").is_some());
@@ -1417,7 +1428,9 @@ mod tests {
     #[test]
     fn test_extension_map_completeness() {
         // Verify common extensions are mapped
-        let required_exts = ["rs", "ts", "tsx", "js", "jsx", "py", "go", "java", "c", "cpp", "h", "rb", "sh"];
+        let required_exts = [
+            "rs", "ts", "tsx", "js", "jsx", "py", "go", "java", "c", "cpp", "h", "rb", "sh",
+        ];
         for ext in required_exts {
             assert!(
                 EXTENSION_MAP.contains_key(ext),

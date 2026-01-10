@@ -53,12 +53,12 @@ impl Summary {
         let mut by_language: AHashMap<String, LanguageStats> = AHashMap::new();
 
         for file_stat in &stats {
-            let entry = by_language.entry(file_stat.language.clone()).or_insert_with(|| {
-                LanguageStats {
+            let entry = by_language
+                .entry(file_stat.language.clone())
+                .or_insert_with(|| LanguageStats {
                     name: file_stat.language.clone(),
                     ..Default::default()
-                }
-            });
+                });
             entry.add(file_stat);
         }
 

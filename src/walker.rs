@@ -130,17 +130,13 @@ fn walk_git_files(config: &WalkerConfig) -> Vec<FileEntry> {
         args.push("--recurse-submodules");
     }
 
-    let output = Command::new("git")
-        .args(&args)
-        .output();
+    let output = Command::new("git").args(&args).output();
 
     let files = match output {
-        Ok(out) if out.status.success() => {
-            String::from_utf8_lossy(&out.stdout)
-                .lines()
-                .map(PathBuf::from)
-                .collect::<Vec<_>>()
-        }
+        Ok(out) if out.status.success() => String::from_utf8_lossy(&out.stdout)
+            .lines()
+            .map(PathBuf::from)
+            .collect::<Vec<_>>(),
         _ => return walk_filesystem(config),
     };
 
@@ -186,10 +182,14 @@ fn walk_filesystem(config: &WalkerConfig) -> Vec<FileEntry> {
 }
 
 fn filter_files(files: Vec<PathBuf>, config: &WalkerConfig) -> Vec<FileEntry> {
-    let include_langs_lower: Vec<String> = config.include_langs.iter()
+    let include_langs_lower: Vec<String> = config
+        .include_langs
+        .iter()
         .map(|s| s.to_lowercase())
         .collect();
-    let exclude_langs_lower: Vec<String> = config.exclude_langs.iter()
+    let exclude_langs_lower: Vec<String> = config
+        .exclude_langs
+        .iter()
         .map(|s| s.to_lowercase())
         .collect();
 
@@ -209,10 +209,18 @@ fn filter_files(files: Vec<PathBuf>, config: &WalkerConfig) -> Vec<FileEntry> {
 
             if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
                 if !config.include_exts.is_empty()
-                    && !config.include_exts.iter().any(|e| e.eq_ignore_ascii_case(ext)) {
-                        return false;
-                    }
-                if config.exclude_exts.iter().any(|e| e.eq_ignore_ascii_case(ext)) {
+                    && !config
+                        .include_exts
+                        .iter()
+                        .any(|e| e.eq_ignore_ascii_case(ext))
+                {
+                    return false;
+                }
+                if config
+                    .exclude_exts
+                    .iter()
+                    .any(|e| e.eq_ignore_ascii_case(ext))
+                {
                     return false;
                 }
             } else if !config.include_exts.is_empty() {
@@ -246,7 +254,8 @@ fn filter_files(files: Vec<PathBuf>, config: &WalkerConfig) -> Vec<FileEntry> {
             }
 
             if let Some(ref regex) = config.match_dir {
-                let dir = path.parent()
+                let dir = path
+                    .parent()
                     .map(|p| p.to_string_lossy())
                     .unwrap_or_default();
                 if !regex.is_match(&dir) {
@@ -301,11 +310,17 @@ fn filter_files(files: Vec<PathBuf>, config: &WalkerConfig) -> Vec<FileEntry> {
             }?;
 
             if !include_langs_lower.is_empty()
-                && !include_langs_lower.iter().any(|l| l.eq_ignore_ascii_case(language.name)) {
-                    return None;
-                }
+                && !include_langs_lower
+                    .iter()
+                    .any(|l| l.eq_ignore_ascii_case(language.name))
+            {
+                return None;
+            }
 
-            if exclude_langs_lower.iter().any(|l| l.eq_ignore_ascii_case(language.name)) {
+            if exclude_langs_lower
+                .iter()
+                .any(|l| l.eq_ignore_ascii_case(language.name))
+            {
                 return None;
             }
 
@@ -345,10 +360,13 @@ mod tests {
         // Test with lowercase language name (the bug we fixed)
         let mut config = WalkerConfig::default();
         config.paths = vec![temp.path().to_path_buf()];
-        config.force_lang.insert("tsx".to_string(), "typescript".to_string());
+        config
+            .force_lang
+            .insert("tsx".to_string(), "typescript".to_string());
 
         let files = walk_files(&config);
-        let tsx_as_ts: Vec<_> = files.iter()
+        let tsx_as_ts: Vec<_> = files
+            .iter()
             .filter(|f| f.path.extension().is_some_and(|e| e == "tsx"))
             .collect();
 
@@ -366,10 +384,13 @@ mod tests {
 
         let mut config = WalkerConfig::default();
         config.paths = vec![temp.path().to_path_buf()];
-        config.force_lang.insert("tsx".to_string(), "TypeScript".to_string());
+        config
+            .force_lang
+            .insert("tsx".to_string(), "TypeScript".to_string());
 
         let files = walk_files(&config);
-        let tsx_files: Vec<_> = files.iter()
+        let tsx_files: Vec<_> = files
+            .iter()
             .filter(|f| f.path.extension().is_some_and(|e| e == "tsx"))
             .collect();
 
@@ -489,7 +510,9 @@ mod tests {
 
         let mut config = WalkerConfig::default();
         config.paths = vec![temp.path().to_path_buf()];
-        config.force_lang.insert("xyz".to_string(), "NotARealLanguage".to_string());
+        config
+            .force_lang
+            .insert("xyz".to_string(), "NotARealLanguage".to_string());
 
         let files = walk_files(&config);
         // File should be excluded because the forced language doesn't exist

@@ -39,11 +39,7 @@ pub struct DiffResult {
     pub totals: DiffStats,
 }
 
-pub fn compute_diff(
-    config1: &WalkerConfig,
-    config2: &WalkerConfig,
-    verbose: bool,
-) -> DiffResult {
+pub fn compute_diff(config1: &WalkerConfig, config2: &WalkerConfig, verbose: bool) -> DiffResult {
     let files1 = walk_files(config1);
     let files2 = walk_files(config2);
 
@@ -58,7 +54,10 @@ pub fn compute_diff(
         let entry = by_language.entry(lang.clone()).or_default();
 
         if let Some((_, stats2)) = stats2.get(path) {
-            if stats.code == stats2.code && stats.comments == stats2.comments && stats.blanks == stats2.blanks {
+            if stats.code == stats2.code
+                && stats.comments == stats2.comments
+                && stats.blanks == stats2.blanks
+            {
                 entry.same.add(stats);
                 totals.same.add(stats);
             } else {
@@ -80,19 +79,21 @@ pub fn compute_diff(
         }
     }
 
-    DiffResult { by_language, totals }
+    DiffResult {
+        by_language,
+        totals,
+    }
 }
 
-fn collect_stats(
-    files: &[FileEntry],
-    verbose: bool,
-) -> HashMap<PathBuf, (String, FileStats)> {
+fn collect_stats(files: &[FileEntry], verbose: bool) -> HashMap<PathBuf, (String, FileStats)> {
     let mut result = HashMap::new();
 
     for entry in files {
         match count_lines(&entry.path, entry.language) {
             Ok(stats) if stats.total() > 0 => {
-                let relative = entry.path.file_name()
+                let relative = entry
+                    .path
+                    .file_name()
                     .map(PathBuf::from)
                     .unwrap_or_else(|| entry.path.clone());
                 result.insert(relative, (entry.language.name.to_string(), stats));
@@ -109,7 +110,10 @@ fn collect_stats(
 
 pub fn render_diff(result: &DiffResult) {
     println!();
-    println!("{:<14} {:>10} {:>10} {:>10} {:>10}", "Language", "Same", "Modified", "Added", "Removed");
+    println!(
+        "{:<14} {:>10} {:>10} {:>10} {:>10}",
+        "Language", "Same", "Modified", "Added", "Removed"
+    );
     println!("{}", "─".repeat(58));
 
     let mut langs: Vec<_> = result.by_language.iter().collect();

@@ -53,9 +53,11 @@ impl CustomLanguages {
                         .collect::<Vec<_>>()
                         .into_boxed_slice(),
                 ),
-                block_comment_start: def.block_comment_start
+                block_comment_start: def
+                    .block_comment_start
                     .map(|s| Box::leak(s.into_boxed_str()) as &'static str),
-                block_comment_end: def.block_comment_end
+                block_comment_end: def
+                    .block_comment_end
                     .map(|s| Box::leak(s.into_boxed_str()) as &'static str),
                 nested_comments: def.nested_comments,
                 string_delimiters: Box::leak(
@@ -73,7 +75,10 @@ impl CustomLanguages {
         }
 
         CUSTOM_LANGUAGES
-            .set(CustomLanguages { languages, extensions })
+            .set(CustomLanguages {
+                languages,
+                extensions,
+            })
             .map_err(|_| "Custom languages already loaded".to_string())?;
 
         Ok(())

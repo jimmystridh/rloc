@@ -1,5 +1,7 @@
 use crate::stats::{JsonOutput, LanguageStats, Summary};
-use comfy_table::{presets::UTF8_FULL_CONDENSED, Attribute, Cell, Color, ContentArrangement, Table};
+use comfy_table::{
+    presets::UTF8_FULL_CONDENSED, Attribute, Cell, Color, ContentArrangement, Table,
+};
 use std::io::{self, Write};
 
 fn apply_summary_cutoff(languages: &[LanguageStats], cutoff: usize) -> Vec<LanguageStats> {
@@ -100,8 +102,14 @@ fn render_table(summary: &Summary, config: &OutputConfig, out: &mut impl Write) 
     if !config.hide_rate {
         if let Some(elapsed) = summary.elapsed {
             writeln!(out)?;
-            write!(out, "{} files processed in {:.3}s", summary.total_files, elapsed.as_secs_f64())?;
-            if let (Some(fps), Some(lps)) = (summary.files_per_second(), summary.lines_per_second()) {
+            write!(
+                out,
+                "{} files processed in {:.3}s",
+                summary.total_files,
+                elapsed.as_secs_f64()
+            )?;
+            if let (Some(fps), Some(lps)) = (summary.files_per_second(), summary.lines_per_second())
+            {
                 write!(out, " ({:.0} files/s, {:.0} lines/s)", fps, lps)?;
             }
             writeln!(out)?;
@@ -119,7 +127,11 @@ fn render_table(summary: &Summary, config: &OutputConfig, out: &mut impl Write) 
     Ok(())
 }
 
-fn render_language_table(summary: &Summary, config: &OutputConfig, out: &mut impl Write) -> io::Result<()> {
+fn render_language_table(
+    summary: &Summary,
+    config: &OutputConfig,
+    out: &mut impl Write,
+) -> io::Result<()> {
     let mut table = Table::new();
     table
         .load_preset(UTF8_FULL_CONDENSED)
@@ -174,7 +186,10 @@ fn render_language_table(summary: &Summary, config: &OutputConfig, out: &mut imp
 
         if config.show_total_column {
             if config.by_percent {
-                row.push(Cell::new(format_percent(lang.total(), summary.total_lines())));
+                row.push(Cell::new(format_percent(
+                    lang.total(),
+                    summary.total_lines(),
+                )));
             } else {
                 row.push(Cell::new(lang.total()));
             }
@@ -189,7 +204,9 @@ fn render_language_table(summary: &Summary, config: &OutputConfig, out: &mut imp
             Cell::new("100.00%").add_attribute(Attribute::Bold),
             Cell::new("100.00%").add_attribute(Attribute::Bold),
             Cell::new("100.00%").add_attribute(Attribute::Bold),
-            Cell::new("100.00%").add_attribute(Attribute::Bold).fg(Color::Green),
+            Cell::new("100.00%")
+                .add_attribute(Attribute::Bold)
+                .fg(Color::Green),
         ]
     } else {
         vec![
@@ -197,7 +214,9 @@ fn render_language_table(summary: &Summary, config: &OutputConfig, out: &mut imp
             Cell::new(summary.total_files).add_attribute(Attribute::Bold),
             Cell::new(summary.total_blanks).add_attribute(Attribute::Bold),
             Cell::new(summary.total_comments).add_attribute(Attribute::Bold),
-            Cell::new(summary.total_code).add_attribute(Attribute::Bold).fg(Color::Green),
+            Cell::new(summary.total_code)
+                .add_attribute(Attribute::Bold)
+                .fg(Color::Green),
         ]
     };
 
@@ -217,7 +236,11 @@ fn render_language_table(summary: &Summary, config: &OutputConfig, out: &mut imp
     Ok(())
 }
 
-fn render_by_file_table(summary: &Summary, _config: &OutputConfig, out: &mut impl Write) -> io::Result<()> {
+fn render_by_file_table(
+    summary: &Summary,
+    _config: &OutputConfig,
+    out: &mut impl Write,
+) -> io::Result<()> {
     let mut table = Table::new();
     table
         .load_preset(UTF8_FULL_CONDENSED)
@@ -252,8 +275,7 @@ fn render_by_file_table(summary: &Summary, _config: &OutputConfig, out: &mut imp
 
 fn render_json(summary: &Summary, _config: &OutputConfig, out: &mut impl Write) -> io::Result<()> {
     let output = JsonOutput::from(summary);
-    let json = serde_json::to_string_pretty(&output)
-        .map_err(io::Error::other)?;
+    let json = serde_json::to_string_pretty(&output).map_err(io::Error::other)?;
     writeln!(out, "{}", json)?;
     Ok(())
 }
@@ -305,17 +327,25 @@ fn render_csv(summary: &Summary, config: &OutputConfig, out: &mut impl Write) ->
 
 fn render_yaml(summary: &Summary, _config: &OutputConfig, out: &mut impl Write) -> io::Result<()> {
     let output = JsonOutput::from(summary);
-    let yaml = serde_yaml::to_string(&output)
-        .map_err(io::Error::other)?;
+    let yaml = serde_yaml::to_string(&output).map_err(io::Error::other)?;
     write!(out, "{}", yaml)?;
     Ok(())
 }
 
-fn render_markdown(summary: &Summary, config: &OutputConfig, out: &mut impl Write) -> io::Result<()> {
+fn render_markdown(
+    summary: &Summary,
+    config: &OutputConfig,
+    out: &mut impl Write,
+) -> io::Result<()> {
     if !config.hide_rate {
         if let Some(elapsed) = summary.elapsed {
             writeln!(out)?;
-            writeln!(out, "**{} files** processed in **{:.3}s**", summary.total_files, elapsed.as_secs_f64())?;
+            writeln!(
+                out,
+                "**{} files** processed in **{:.3}s**",
+                summary.total_files,
+                elapsed.as_secs_f64()
+            )?;
             writeln!(out)?;
         }
     }
@@ -424,10 +454,7 @@ fn render_sql(summary: &Summary, config: &OutputConfig, out: &mut impl Write) ->
         writeln!(
             out,
             "INSERT INTO t VALUES ('SUM', {}, {}, {}, {});",
-            summary.total_files,
-            summary.total_blanks,
-            summary.total_comments,
-            summary.total_code
+            summary.total_files, summary.total_blanks, summary.total_comments, summary.total_code
         )?;
     }
 
@@ -442,7 +469,11 @@ fn render_xml(summary: &Summary, config: &OutputConfig, out: &mut impl Write) ->
         writeln!(out, "  <header>")?;
         writeln!(out, "    <n_files>{}</n_files>", summary.total_files)?;
         writeln!(out, "    <n_lines>{}</n_lines>", summary.total_lines())?;
-        writeln!(out, "    <elapsed_seconds>{:.3}</elapsed_seconds>", elapsed.as_secs_f64())?;
+        writeln!(
+            out,
+            "    <elapsed_seconds>{:.3}</elapsed_seconds>",
+            elapsed.as_secs_f64()
+        )?;
         writeln!(out, "  </header>")?;
     }
 
@@ -451,7 +482,11 @@ fn render_xml(summary: &Summary, config: &OutputConfig, out: &mut impl Write) ->
         for file in &summary.file_stats {
             writeln!(out, "    <file>")?;
             writeln!(out, "      <name>{}</name>", escape_xml(&file.path))?;
-            writeln!(out, "      <language>{}</language>", escape_xml(&file.language))?;
+            writeln!(
+                out,
+                "      <language>{}</language>",
+                escape_xml(&file.language)
+            )?;
             writeln!(out, "      <blank>{}</blank>", file.blanks)?;
             writeln!(out, "      <comment>{}</comment>", file.comments)?;
             writeln!(out, "      <code>{}</code>", file.code)?;
@@ -509,15 +544,13 @@ mod tests {
     use crate::counter::FileStats;
 
     fn sample_summary() -> Summary {
-        Summary::from_file_stats(vec![
-            FileStats {
-                path: "main.rs".into(),
-                language: "Rust".into(),
-                code: 100,
-                comments: 20,
-                blanks: 10,
-            },
-        ])
+        Summary::from_file_stats(vec![FileStats {
+            path: "main.rs".into(),
+            language: "Rust".into(),
+            code: 100,
+            comments: 20,
+            blanks: 10,
+        }])
     }
 
     #[test]

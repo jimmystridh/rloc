@@ -137,7 +137,14 @@ pub fn classify_line(line: &str, initial_state: State, lang: &Language) -> (Stat
                 for &line_comment in lang.line_comments {
                     if remaining.starts_with(line_comment) {
                         has_comment = true;
-                        return (State::Code, if has_code { LineType::Mixed } else { LineType::Comment });
+                        return (
+                            State::Code,
+                            if has_code {
+                                LineType::Mixed
+                            } else {
+                                LineType::Comment
+                            },
+                        );
                     }
                 }
 
@@ -248,7 +255,11 @@ mod tests {
             ("// comment", State::Code, LineType::Comment),
             ("let x = 5; // comment", State::Code, LineType::Mixed),
             ("/* block */", State::Code, LineType::Comment),
-            ("/* start", State::BlockComment { depth: 1 }, LineType::Comment),
+            (
+                "/* start",
+                State::BlockComment { depth: 1 },
+                LineType::Comment,
+            ),
         ];
 
         for (line, expected_state, expected_type) in cases {

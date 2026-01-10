@@ -22,7 +22,11 @@ pub struct Cli {
     )]
     pub paths: Vec<PathBuf>,
 
-    #[arg(long, value_name = "PATH", help = "Compare against another set of files/directories")]
+    #[arg(
+        long,
+        value_name = "PATH",
+        help = "Compare against another set of files/directories"
+    )]
     pub diff: Option<PathBuf>,
 
     #[arg(long, help = "Report results for every source file")]
@@ -40,7 +44,11 @@ pub struct Cli {
     #[arg(long, help = "Write results as CSV")]
     pub csv: bool,
 
-    #[arg(long, value_name = "C", help = "Use character <C> as CSV delimiter (default: ',')")]
+    #[arg(
+        long,
+        value_name = "C",
+        help = "Use character <C> as CSV delimiter (default: ',')"
+    )]
     pub csv_delimiter: Option<char>,
 
     #[arg(long, help = "Write results as YAML")]
@@ -55,7 +63,11 @@ pub struct Cli {
     #[arg(long, help = "Write results as XML")]
     pub xml: bool,
 
-    #[arg(long, value_name = "DIR", help = "Exclude directories matching these names")]
+    #[arg(
+        long,
+        value_name = "DIR",
+        help = "Exclude directories matching these names"
+    )]
     pub exclude_dir: Vec<String>,
 
     #[arg(long, value_name = "EXT", help = "Exclude files with these extensions")]
@@ -64,19 +76,35 @@ pub struct Cli {
     #[arg(long, value_name = "LANG", help = "Exclude these languages")]
     pub exclude_lang: Vec<String>,
 
-    #[arg(long, value_name = "EXT", help = "Only count files with these extensions")]
+    #[arg(
+        long,
+        value_name = "EXT",
+        help = "Only count files with these extensions"
+    )]
     pub include_ext: Vec<String>,
 
     #[arg(long, value_name = "LANG", help = "Only count these languages")]
     pub include_lang: Vec<String>,
 
-    #[arg(long, value_name = "LANG,EXT", help = "Treat files with extension EXT as language LANG (e.g. Rust,txt)")]
+    #[arg(
+        long,
+        value_name = "LANG,EXT",
+        help = "Treat files with extension EXT as language LANG (e.g. Rust,txt)"
+    )]
     pub force_lang: Vec<String>,
 
-    #[arg(long, value_name = "REGEX", help = "Only count files in directories matching regex")]
+    #[arg(
+        long,
+        value_name = "REGEX",
+        help = "Only count files in directories matching regex"
+    )]
     pub match_d: Option<String>,
 
-    #[arg(long, value_name = "REGEX", help = "Exclude directories matching regex")]
+    #[arg(
+        long,
+        value_name = "REGEX",
+        help = "Exclude directories matching regex"
+    )]
     pub not_match_d: Vec<String>,
 
     #[arg(long, value_name = "REGEX", help = "Only count files matching regex")]
@@ -85,10 +113,18 @@ pub struct Cli {
     #[arg(long, value_name = "REGEX", help = "Exclude files matching regex")]
     pub not_match_f: Vec<String>,
 
-    #[arg(long, value_name = "REGEX", help = "Only count files containing content matching regex")]
+    #[arg(
+        long,
+        value_name = "REGEX",
+        help = "Only count files containing content matching regex"
+    )]
     pub include_content: Option<String>,
 
-    #[arg(long, value_name = "REGEX", help = "Exclude files containing content matching regex")]
+    #[arg(
+        long,
+        value_name = "REGEX",
+        help = "Exclude files containing content matching regex"
+    )]
     pub exclude_content: Option<String>,
 
     #[arg(long, help = "Use full path in regex matching")]
@@ -109,19 +145,29 @@ pub struct Cli {
     #[arg(long, help = "Include hidden files and directories")]
     pub hidden: bool,
 
-    #[arg(long, help = "Disable default directory exclusions (node_modules, target, etc.)")]
+    #[arg(
+        long,
+        help = "Disable default directory exclusions (node_modules, target, etc.)"
+    )]
     pub no_ignore: bool,
 
     #[arg(long, help = "Don't respect .gitignore files")]
     pub skip_gitignore: bool,
 
-    #[arg(long, help = "Skip file uniqueness check (count duplicate files multiple times)")]
+    #[arg(
+        long,
+        help = "Skip file uniqueness check (count duplicate files multiple times)"
+    )]
     pub skip_uniqueness: bool,
 
     #[arg(long, help = "Include files in git submodules (requires Git 2.11+)")]
     pub include_submodules: bool,
 
-    #[arg(long, value_name = "FILE", help = "Read file paths from FILE (one per line)")]
+    #[arg(
+        long,
+        value_name = "FILE",
+        help = "Read file paths from FILE (one per line)"
+    )]
     pub list_file: Option<PathBuf>,
 
     #[arg(long, value_name = "N", help = "Maximum directory depth")]
@@ -130,13 +176,21 @@ pub struct Cli {
     #[arg(long, help = "Do not recurse into subdirectories")]
     pub no_recurse: bool,
 
-    #[arg(long, value_name = "MB", help = "Skip files larger than <MB> megabytes")]
+    #[arg(
+        long,
+        value_name = "MB",
+        help = "Skip files larger than <MB> megabytes"
+    )]
     pub max_file_size: Option<u64>,
 
     #[arg(long, value_enum, default_value = "code", help = "Sort output by")]
     pub sort: SortField,
 
-    #[arg(long, value_name = "N", help = "Aggregate languages with fewer than N files into 'Other'")]
+    #[arg(
+        long,
+        value_name = "N",
+        help = "Aggregate languages with fewer than N files into 'Other'"
+    )]
     pub summary_cutoff: Option<usize>,
 
     #[arg(long, help = "Do not show rate statistics")]
@@ -154,7 +208,12 @@ pub struct Cli {
     #[arg(long, value_name = "FILE", help = "Write output to file")]
     pub out: Option<PathBuf>,
 
-    #[arg(long, alias = "report-file", value_name = "FILE", help = "Write output to file")]
+    #[arg(
+        long,
+        alias = "report-file",
+        value_name = "FILE",
+        help = "Write output to file"
+    )]
     pub report_file: Option<PathBuf>,
 
     #[arg(long, help = "Show an extra column with total lines")]
@@ -166,19 +225,40 @@ pub struct Cli {
     #[arg(long, help = "Print all known file extensions and exit")]
     pub show_ext: bool,
 
-    #[arg(long, value_name = "FILE", help = "Load custom language definitions from YAML file")]
+    #[arg(
+        long,
+        value_name = "FILE",
+        help = "Load custom language definitions from YAML file"
+    )]
     pub read_lang_def: Option<PathBuf>,
 
-    #[arg(long, value_name = "EXT", help = "Write files with comments removed (output to <file>.<EXT>)")]
+    #[arg(
+        long,
+        value_name = "EXT",
+        help = "Write files with comments removed (output to <file>.<EXT>)"
+    )]
     pub strip_comments: Option<String>,
 
-    #[arg(long, value_name = "EXT", help = "Write files with code removed, keeping only comments (output to <file>.<EXT>)")]
+    #[arg(
+        long,
+        value_name = "EXT",
+        help = "Write files with code removed, keeping only comments (output to <file>.<EXT>)"
+    )]
     pub strip_code: Option<String>,
 
-    #[arg(long, value_name = "FILE", help = "Read and sum JSON reports from files")]
+    #[arg(
+        long,
+        value_name = "FILE",
+        help = "Read and sum JSON reports from files"
+    )]
     pub sum_reports: Vec<PathBuf>,
 
-    #[arg(long, value_name = "N", default_value = "0", help = "Number of threads (0 = auto)")]
+    #[arg(
+        long,
+        value_name = "N",
+        default_value = "0",
+        help = "Number of threads (0 = auto)"
+    )]
     pub threads: usize,
 }
 
@@ -226,44 +306,61 @@ impl Cli {
 
         config.exclude_dirs.extend(self.exclude_dir.iter().cloned());
         config.exclude_exts.extend(self.exclude_ext.iter().cloned());
-        config.exclude_langs.extend(self.exclude_lang.iter().cloned());
+        config
+            .exclude_langs
+            .extend(self.exclude_lang.iter().cloned());
         config.include_exts.extend(self.include_ext.iter().cloned());
-        config.include_langs.extend(self.include_lang.iter().cloned());
+        config
+            .include_langs
+            .extend(self.include_lang.iter().cloned());
 
         for spec in &self.force_lang {
             if let Some((lang, ext)) = spec.split_once(',') {
-                config.force_lang.insert(ext.to_lowercase(), lang.to_string());
+                config
+                    .force_lang
+                    .insert(ext.to_lowercase(), lang.to_string());
             } else {
-                return Err(format!("Invalid --force-lang format '{}', expected LANG,EXT", spec));
+                return Err(format!(
+                    "Invalid --force-lang format '{}', expected LANG,EXT",
+                    spec
+                ));
             }
         }
 
         if let Some(ref pattern) = self.match_d {
-            config.match_dir = Some(Regex::new(pattern).map_err(|e| format!("Invalid --match-d regex: {}", e))?);
+            config.match_dir =
+                Some(Regex::new(pattern).map_err(|e| format!("Invalid --match-d regex: {}", e))?);
         }
 
         for pattern in &self.not_match_d {
             config.not_match_dir.push(
-                Regex::new(pattern).map_err(|e| format!("Invalid --not-match-d regex: {}", e))?
+                Regex::new(pattern).map_err(|e| format!("Invalid --not-match-d regex: {}", e))?,
             );
         }
 
         if let Some(ref pattern) = self.match_f {
-            config.match_file = Some(Regex::new(pattern).map_err(|e| format!("Invalid --match-f regex: {}", e))?);
+            config.match_file =
+                Some(Regex::new(pattern).map_err(|e| format!("Invalid --match-f regex: {}", e))?);
         }
 
         for pattern in &self.not_match_f {
             config.not_match_file.push(
-                Regex::new(pattern).map_err(|e| format!("Invalid --not-match-f regex: {}", e))?
+                Regex::new(pattern).map_err(|e| format!("Invalid --not-match-f regex: {}", e))?,
             );
         }
 
         if let Some(ref pattern) = self.include_content {
-            config.include_content = Some(Regex::new(pattern).map_err(|e| format!("Invalid --include-content regex: {}", e))?);
+            config.include_content = Some(
+                Regex::new(pattern)
+                    .map_err(|e| format!("Invalid --include-content regex: {}", e))?,
+            );
         }
 
         if let Some(ref pattern) = self.exclude_content {
-            config.exclude_content = Some(Regex::new(pattern).map_err(|e| format!("Invalid --exclude-content regex: {}", e))?);
+            config.exclude_content = Some(
+                Regex::new(pattern)
+                    .map_err(|e| format!("Invalid --exclude-content regex: {}", e))?,
+            );
         }
 
         config.vcs = self.vcs.or(self.files_from).map(|v| match v {
@@ -275,7 +372,11 @@ impl Cli {
         config.follow_symlinks = self.follow_symlinks;
         config.hidden = self.hidden;
         config.fullpath = self.fullpath;
-        config.max_depth = if self.no_recurse { Some(1) } else { self.max_depth };
+        config.max_depth = if self.no_recurse {
+            Some(1)
+        } else {
+            self.max_depth
+        };
         config.skip_gitignore = self.skip_gitignore;
         config.skip_uniqueness = self.skip_uniqueness;
         config.include_submodules = self.include_submodules;
@@ -342,7 +443,13 @@ pub fn show_languages() {
 
     let mut table = Table::new();
     table.load_preset(UTF8_FULL_CONDENSED);
-    table.set_header(["Language", "Line Comments", "Block Start", "Block End", "Nested"]);
+    table.set_header([
+        "Language",
+        "Line Comments",
+        "Block Start",
+        "Block End",
+        "Nested",
+    ]);
 
     let mut langs: Vec<_> = list_languages().collect();
     langs.sort_by_key(|(name, _)| *name);
