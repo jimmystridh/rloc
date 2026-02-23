@@ -327,7 +327,7 @@ fn render_csv(summary: &Summary, config: &OutputConfig, out: &mut impl Write) ->
 
 fn render_yaml(summary: &Summary, _config: &OutputConfig, out: &mut impl Write) -> io::Result<()> {
     let output = JsonOutput::from(summary);
-    let yaml = serde_yaml::to_string(&output).map_err(io::Error::other)?;
+    let yaml = serde_yaml_ng::to_string(&output).map_err(io::Error::other)?;
     write!(out, "{}", yaml)?;
     Ok(())
 }

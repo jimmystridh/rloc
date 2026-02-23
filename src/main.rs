@@ -233,7 +233,7 @@ fn render_to_writer(
         }
         OutputFormat::Yaml => {
             let output = rloc::stats::JsonOutput::from(summary);
-            let yaml = serde_yaml::to_string(&output).map_err(io::Error::other)?;
+            let yaml = serde_yaml_ng::to_string(&output).map_err(io::Error::other)?;
             write!(out, "{}", yaml)
         }
         OutputFormat::Markdown => {

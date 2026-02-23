@@ -33,7 +33,7 @@ impl CustomLanguages {
         let content = std::fs::read_to_string(path)
             .map_err(|e| format!("Failed to read {}: {}", path.display(), e))?;
 
-        let defs: HashMap<String, CustomLanguageDef> = serde_yaml::from_str(&content)
+        let defs: HashMap<String, CustomLanguageDef> = serde_yaml_ng::from_str(&content)
             .map_err(|e| format!("Failed to parse {}: {}", path.display(), e))?;
 
         let mut languages = HashMap::new();
