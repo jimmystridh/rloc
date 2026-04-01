@@ -9,7 +9,7 @@ readme = "README.md"
 repository = "https://github.com/js/rloc"
 keywords = ["cloc", "loc", "lines-of-code", "code-metrics", "cli"]
 categories = ["command-line-utilities", "development-tools"]
-rust-version = "1.85"
+rust-version = "1.88"
 
 [lib]
 name = "rloc"
@@ -46,7 +46,7 @@ bstr = "1"
 ahash = "0.8"
 dashmap = "6"
 phf = { version = "0.13", features = ["macros"] }
-zip = "7"
+zip = "8"
 tar = "0.4"
 flate2 = "1"
 thiserror = "2"

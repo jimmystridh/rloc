@@ -206,13 +206,13 @@ pub fn analyze_fast(path: impl AsRef<Path>) -> Result<Analysis> {
 
 /// Analyze with custom configuration.
 pub fn analyze_with_config(config: AnalyzeConfig) -> Result<Analysis> {
-    if let Some(threads) = config.threads {
-        if threads > 0 {
-            rayon::ThreadPoolBuilder::new()
-                .num_threads(threads)
-                .build_global()
-                .ok();
-        }
+    if let Some(threads) = config.threads
+        && threads > 0
+    {
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(threads)
+            .build_global()
+            .ok();
     }
 
     let walker_config = config_to_walker(&config);
@@ -227,10 +227,10 @@ pub fn analyze_with_config(config: AnalyzeConfig) -> Result<Analysis> {
     let file_stats: Vec<_> = files
         .into_par_iter()
         .filter_map(|entry| {
-            if let Ok(hash) = counter::compute_file_hash(&entry.path) {
-                if !seen_hashes.insert(hash) {
-                    return None;
-                }
+            if let Ok(hash) = counter::compute_file_hash(&entry.path)
+                && !seen_hashes.insert(hash)
+            {
+                return None;
             }
 
             match counter::count_lines(&entry.path, entry.language) {

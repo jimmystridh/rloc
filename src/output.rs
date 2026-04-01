@@ -99,21 +99,20 @@ pub fn render(summary: &Summary, config: &OutputConfig) -> io::Result<()> {
 }
 
 fn render_table(summary: &Summary, config: &OutputConfig, out: &mut impl Write) -> io::Result<()> {
-    if !config.hide_rate {
-        if let Some(elapsed) = summary.elapsed {
-            writeln!(out)?;
-            write!(
-                out,
-                "{} files processed in {:.3}s",
-                summary.total_files,
-                elapsed.as_secs_f64()
-            )?;
-            if let (Some(fps), Some(lps)) = (summary.files_per_second(), summary.lines_per_second())
-            {
-                write!(out, " ({:.0} files/s, {:.0} lines/s)", fps, lps)?;
-            }
-            writeln!(out)?;
+    if !config.hide_rate
+        && let Some(elapsed) = summary.elapsed
+    {
+        writeln!(out)?;
+        write!(
+            out,
+            "{} files processed in {:.3}s",
+            summary.total_files,
+            elapsed.as_secs_f64()
+        )?;
+        if let (Some(fps), Some(lps)) = (summary.files_per_second(), summary.lines_per_second()) {
+            write!(out, " ({:.0} files/s, {:.0} lines/s)", fps, lps)?;
         }
+        writeln!(out)?;
     }
 
     if config.by_file || config.by_file_by_lang {
@@ -337,17 +336,17 @@ fn render_markdown(
     config: &OutputConfig,
     out: &mut impl Write,
 ) -> io::Result<()> {
-    if !config.hide_rate {
-        if let Some(elapsed) = summary.elapsed {
-            writeln!(out)?;
-            writeln!(
-                out,
-                "**{} files** processed in **{:.3}s**",
-                summary.total_files,
-                elapsed.as_secs_f64()
-            )?;
-            writeln!(out)?;
-        }
+    if !config.hide_rate
+        && let Some(elapsed) = summary.elapsed
+    {
+        writeln!(out)?;
+        writeln!(
+            out,
+            "**{} files** processed in **{:.3}s**",
+            summary.total_files,
+            elapsed.as_secs_f64()
+        )?;
+        writeln!(out)?;
     }
 
     if config.by_file {

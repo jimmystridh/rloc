@@ -113,12 +113,11 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         .into_par_iter()
         .progress_with(progress.clone())
         .filter_map(|entry| {
-            if !skip_uniqueness {
-                if let Ok(hash) = rloc::counter::compute_file_hash(&entry.path) {
-                    if !seen_hashes.insert(hash) {
-                        return None;
-                    }
-                }
+            if !skip_uniqueness
+                && let Ok(hash) = rloc::counter::compute_file_hash(&entry.path)
+                && !seen_hashes.insert(hash)
+            {
+                return None;
             }
 
             match rloc::counter::count_lines(&entry.path, entry.language) {
@@ -162,22 +161,22 @@ fn render_to_writer(
 ) -> io::Result<()> {
     match config.format {
         OutputFormat::Table => {
-            if !config.hide_rate {
-                if let Some(elapsed) = summary.elapsed {
-                    writeln!(out)?;
-                    write!(
-                        out,
-                        "{} files processed in {:.3}s",
-                        summary.total_files,
-                        elapsed.as_secs_f64()
-                    )?;
-                    if let (Some(fps), Some(lps)) =
-                        (summary.files_per_second(), summary.lines_per_second())
-                    {
-                        write!(out, " ({:.0} files/s, {:.0} lines/s)", fps, lps)?;
-                    }
-                    writeln!(out)?;
+            if !config.hide_rate
+                && let Some(elapsed) = summary.elapsed
+            {
+                writeln!(out)?;
+                write!(
+                    out,
+                    "{} files processed in {:.3}s",
+                    summary.total_files,
+                    elapsed.as_secs_f64()
+                )?;
+                if let (Some(fps), Some(lps)) =
+                    (summary.files_per_second(), summary.lines_per_second())
+                {
+                    write!(out, " ({:.0} files/s, {:.0} lines/s)", fps, lps)?;
                 }
+                writeln!(out)?;
             }
 
             writeln!(out)?;
