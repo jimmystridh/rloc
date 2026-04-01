@@ -100,10 +100,10 @@ pub fn walk_files(config: &WalkerConfig) -> Vec<FileEntry> {
         return walk_git_files(config);
     }
 
-    if let Some(VcsMode::Auto) = config.vcs {
-        if Path::new(".git").exists() {
-            return walk_git_files(config);
-        }
+    if let Some(VcsMode::Auto) = config.vcs
+        && Path::new(".git").exists()
+    {
+        return walk_git_files(config);
     }
 
     walk_filesystem(config)
@@ -199,12 +199,11 @@ fn filter_files(files: Vec<PathBuf>, config: &WalkerConfig) -> Vec<FileEntry> {
         .into_iter()
         .filter(|path| {
             // Check file size first (if configured)
-            if let Some(max) = max_bytes {
-                if let Ok(meta) = path.metadata() {
-                    if meta.len() > max {
-                        return false;
-                    }
-                }
+            if let Some(max) = max_bytes
+                && let Ok(meta) = path.metadata()
+                && meta.len() > max
+            {
+                return false;
             }
 
             if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
@@ -281,15 +280,15 @@ fn filter_files(files: Vec<PathBuf>, config: &WalkerConfig) -> Vec<FileEntry> {
 
             if config.include_content.is_some() || config.exclude_content.is_some() {
                 if let Ok(content) = std::fs::read_to_string(path) {
-                    if let Some(ref regex) = config.include_content {
-                        if !regex.is_match(&content) {
-                            return false;
-                        }
+                    if let Some(ref regex) = config.include_content
+                        && !regex.is_match(&content)
+                    {
+                        return false;
                     }
-                    if let Some(ref regex) = config.exclude_content {
-                        if regex.is_match(&content) {
-                            return false;
-                        }
+                    if let Some(ref regex) = config.exclude_content
+                        && regex.is_match(&content)
+                    {
+                        return false;
                     }
                 } else {
                     return false;

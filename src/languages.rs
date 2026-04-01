@@ -1224,10 +1224,10 @@ pub static FILENAME_MAP: phf::Map<&'static str, &'static str> = phf_map! {
 
 pub fn detect_language(path: &Path) -> Option<&'static Language> {
     // Check custom languages first (if any are loaded)
-    if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-        if let Some(lang) = crate::custom_langs::CustomLanguages::get_by_extension(ext) {
-            return Some(lang);
-        }
+    if let Some(ext) = path.extension().and_then(|e| e.to_str())
+        && let Some(lang) = crate::custom_langs::CustomLanguages::get_by_extension(ext)
+    {
+        return Some(lang);
     }
 
     if let Some(filename) = path.file_name().and_then(|n| n.to_str()) {
@@ -1242,10 +1242,10 @@ pub fn detect_language(path: &Path) -> Option<&'static Language> {
         }
     }
 
-    if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-        if let Some(&lang_name) = EXTENSION_MAP.get(ext) {
-            return LANGUAGES.get(lang_name);
-        }
+    if let Some(ext) = path.extension().and_then(|e| e.to_str())
+        && let Some(&lang_name) = EXTENSION_MAP.get(ext)
+    {
+        return LANGUAGES.get(lang_name);
     }
 
     None
