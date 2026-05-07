@@ -3,7 +3,6 @@ use predicates::prelude::*;
 use std::fs;
 use tempfile::TempDir;
 
-#[allow(deprecated)]
 fn rloc() -> Command {
     Command::cargo_bin("rloc").unwrap()
 }

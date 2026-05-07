@@ -63,7 +63,7 @@ impl Summary {
         }
 
         let mut languages: Vec<_> = by_language.into_values().collect();
-        languages.sort_by(|a, b| b.code.cmp(&a.code));
+        languages.sort_by_key(|language| std::cmp::Reverse(language.code));
 
         let total_files = languages.iter().map(|l| l.files).sum();
         let total_code = languages.iter().map(|l| l.code).sum();
