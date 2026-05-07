@@ -271,7 +271,7 @@ pub fn analyze_fast_with_config(config: AnalyzeConfig) -> Result<Analysis> {
         })
         .collect();
 
-    languages.sort_by(|a, b| b.files.cmp(&a.files));
+    languages.sort_by_key(|language| std::cmp::Reverse(language.files));
 
     let total_files = languages.iter().map(|l| l.files).sum();
 

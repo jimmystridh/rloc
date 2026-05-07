@@ -157,10 +157,10 @@ fn render_language_table(
     };
     match config.sort_by {
         SortBy::Language => languages.sort_by(|a, b| a.name.cmp(&b.name)),
-        SortBy::Files => languages.sort_by(|a, b| b.files.cmp(&a.files)),
-        SortBy::Code => languages.sort_by(|a, b| b.code.cmp(&a.code)),
-        SortBy::Comments => languages.sort_by(|a, b| b.comments.cmp(&a.comments)),
-        SortBy::Blanks => languages.sort_by(|a, b| b.blanks.cmp(&a.blanks)),
+        SortBy::Files => languages.sort_by_key(|language| std::cmp::Reverse(language.files)),
+        SortBy::Code => languages.sort_by_key(|language| std::cmp::Reverse(language.code)),
+        SortBy::Comments => languages.sort_by_key(|language| std::cmp::Reverse(language.comments)),
+        SortBy::Blanks => languages.sort_by_key(|language| std::cmp::Reverse(language.blanks)),
         SortBy::Total => languages.sort_by_key(|l| std::cmp::Reverse(l.total())),
     }
 
@@ -254,7 +254,7 @@ fn render_by_file_table(
     ]);
 
     let mut files = summary.file_stats.clone();
-    files.sort_by(|a, b| b.code.cmp(&a.code));
+    files.sort_by_key(|file| std::cmp::Reverse(file.code));
 
     for file in &files {
         table.add_row(vec![
